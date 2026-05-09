@@ -199,7 +199,7 @@ function CaseRow({ auditCase, active }) {
   const difference = auditCase.invoiceTotal - auditCase.tariffTotal;
 
   return (
-    <NavLink to="/casos" className={`case-row ${active ? "active" : ""}`}>
+    <NavLink to="/dashboard/cases" className={`case-row ${active ? "active" : ""}`}>
       <div className={`case-icon ${auditCase.status}`}>
         <Icon size={18} />
       </div>

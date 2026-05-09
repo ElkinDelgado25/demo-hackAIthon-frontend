@@ -50,7 +50,7 @@ export function UploadedFilesTable({ uploads, onDelete, onReplace }) {
                 <div className="row-actions">
                   <label className="icon-button" title="Reemplazar archivo">
                     <RefreshCcw size={16} />
-                    <input type="file" accept=".pdf,.csv,.xlsx,.json" onChange={(event) => onReplace(upload, event)} />
+                    <input type="file" accept=".pdf,.csv,.xlsx,.json,.png,.jpg,.jpeg" onChange={(event) => onReplace(upload, event)} />
                   </label>
                   <button className="icon-button danger" type="button" onClick={() => onDelete(upload.id)} aria-label="Eliminar archivo">
                     <Trash2 size={16} />

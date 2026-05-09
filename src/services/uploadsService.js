@@ -6,8 +6,8 @@ export const uploadEndpoints = {
   remove: "DELETE /uploads/{id}"
 };
 
-export const allowedUploadExtensions = ["pdf", "csv", "xlsx", "json"];
-export const maxUploadSizeBytes = 10 * 1024 * 1024;
+export const allowedUploadExtensions = ["pdf", "csv", "xlsx", "json", "png", "jpg", "jpeg"];
+export const maxUploadSizeBytes = 20 * 1024 * 1024;
 
 function readUploads() {
   const storedUploads = localStorage.getItem(STORAGE_KEY);
@@ -33,11 +33,22 @@ export function validateAuditFile(file) {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
 
   if (!allowedUploadExtensions.includes(extension)) {
-    return `Tipo no permitido. Usa PDF, CSV, XLSX o JSON.`;
+    return `Tipo no permitido. Usa PDF, CSV, XLSX, JSON, PNG o JPG.`;
   }
 
   if (file.size > maxUploadSizeBytes) {
-    return `El archivo supera el maximo de ${formatFileSize(maxUploadSizeBytes)}.`;
+    return `El archivo supera el maximo total permitido de ${formatFileSize(maxUploadSizeBytes)}.`;
+  }
+
+  return "";
+}
+
+export function validateAuditFilesTotal(files, currentTotalBytes = 0) {
+  const filesTotal = files.reduce((total, file) => total + file.size, 0);
+  const nextTotal = currentTotalBytes + filesTotal;
+
+  if (nextTotal > maxUploadSizeBytes) {
+    return `El total seleccionado supera ${formatFileSize(maxUploadSizeBytes)}. Total actual: ${formatFileSize(nextTotal)}.`;
   }
 
   return "";
@@ -69,7 +80,7 @@ export async function createUpload({ file, auditNumber, documentType, replaceId 
   const uploads = readUploads();
   const fileExtension = file.name.split(".").pop()?.toUpperCase() ?? "ARCHIVO";
   const nextUpload = {
-    id: replaceId ?? `upload-${Date.now()}`,
+    id: replaceId ?? `upload-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     auditNumber,
     documentType,
     name: file.name,
@@ -88,6 +99,17 @@ export async function createUpload({ file, auditNumber, documentType, replaceId 
 
   writeUploads(nextUploads);
   return nextUpload;
+}
+
+export async function createUploads({ files, auditNumber, documentType }) {
+  const uploads = [];
+
+  for (const file of files) {
+    const upload = await createUpload({ file, auditNumber, documentType });
+    uploads.push(upload);
+  }
+
+  return uploads;
 }
 
 export async function deleteUpload(id) {

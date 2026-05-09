@@ -4,11 +4,13 @@ import { UploadedFilesTable } from "./UploadedFilesTable";
 import {
   allowedUploadExtensions,
   createUpload,
+  createUploads,
   deleteUpload,
   formatFileSize,
   getUploads,
   maxUploadSizeBytes,
-  validateAuditFile
+  validateAuditFile,
+  validateAuditFilesTotal
 } from "../services/uploadsService";
 
 const documentOptions = [
@@ -22,14 +24,66 @@ export function FileUploadSection({ defaultAuditNumber }) {
   const [uploads, setUploads] = useState([]);
   const [auditNumber, setAuditNumber] = useState(defaultAuditNumber);
   const [documentType, setDocumentType] = useState("factura");
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFiles, setSelectedFiles] = useState([]);
   const [message, setMessage] = useState({ type: "info", text: "Selecciona un documento para asociarlo a la auditoria." });
 
   useEffect(() => {
     getUploads().then(setUploads);
   }, []);
 
-  const selectedFileError = useMemo(() => (selectedFile ? validateAuditFile(selectedFile) : ""), [selectedFile]);
+  const selectedTotalBytes = useMemo(
+    () => selectedFiles.reduce((total, file) => total + file.size, 0),
+    [selectedFiles]
+  );
+  const currentAuditUploadsTotalBytes = useMemo(() => {
+    const normalizedAuditNumber = auditNumber.trim();
+
+    return uploads
+      .filter((upload) => upload.auditNumber === normalizedAuditNumber)
+      .reduce((total, upload) => total + upload.size, 0);
+  }, [auditNumber, uploads]);
+
+  const selectedFilesError = useMemo(() => {
+    const typeError = selectedFiles.map(validateAuditFile).find(Boolean);
+
+    if (typeError) {
+      return typeError;
+    }
+
+    return validateAuditFilesTotal(selectedFiles, currentAuditUploadsTotalBytes);
+  }, [currentAuditUploadsTotalBytes, selectedFiles]);
+
+  function handleSelectFiles(event) {
+    const incomingFiles = Array.from(event.target.files ?? []);
+
+    if (incomingFiles.length === 0) {
+      return;
+    }
+
+    const typeError = incomingFiles.map(validateAuditFile).find(Boolean);
+
+    if (typeError) {
+      setMessage({ type: "error", text: typeError });
+      event.target.value = "";
+      return;
+    }
+
+    const totalError = validateAuditFilesTotal(incomingFiles, selectedTotalBytes + currentAuditUploadsTotalBytes);
+
+    if (totalError) {
+      setMessage({ type: "error", text: totalError });
+      event.target.value = "";
+      return;
+    }
+
+    setSelectedFiles((currentFiles) => [...currentFiles, ...incomingFiles]);
+    setMessage({ type: "success", text: `${incomingFiles.length} archivo(s) agregado(s) a la cola.` });
+    event.target.value = "";
+  }
+
+  function handleRemoveSelectedFile(index) {
+    setSelectedFiles((currentFiles) => currentFiles.filter((_, fileIndex) => fileIndex !== index));
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -39,22 +93,22 @@ export function FileUploadSection({ defaultAuditNumber }) {
       return;
     }
 
-    if (!selectedFile) {
-      setMessage({ type: "error", text: "Selecciona un archivo para cargar." });
+    if (selectedFiles.length === 0) {
+      setMessage({ type: "error", text: "Selecciona al menos un archivo para cargar." });
       return;
     }
 
-    if (selectedFileError) {
-      setMessage({ type: "error", text: selectedFileError });
+    if (selectedFilesError) {
+      setMessage({ type: "error", text: selectedFilesError });
       return;
     }
 
     try {
-      const upload = await createUpload({ file: selectedFile, auditNumber: auditNumber.trim(), documentType });
-      setUploads((currentUploads) => [upload, ...currentUploads]);
-      setSelectedFile(null);
+      const newUploads = await createUploads({ files: selectedFiles, auditNumber: auditNumber.trim(), documentType });
+      setUploads((currentUploads) => [...newUploads, ...currentUploads]);
+      setSelectedFiles([]);
       fileInputRef.current.value = "";
-      setMessage({ type: "success", text: `${upload.name} fue cargado correctamente.` });
+      setMessage({ type: "success", text: `${newUploads.length} archivo(s) cargado(s) correctamente.` });
     } catch (error) {
       setMessage({ type: "error", text: error.message });
     }
@@ -121,12 +175,13 @@ export function FileUploadSection({ defaultAuditNumber }) {
 
         <label className="file-picker">
           <UploadCloud size={20} />
-          <span>{selectedFile ? selectedFile.name : "Seleccionar archivo"}</span>
+          <span>{selectedFiles.length ? `${selectedFiles.length} archivo(s) seleccionados` : "Seleccionar archivos"}</span>
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.csv,.xlsx,.json"
-            onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+            multiple
+            accept=".pdf,.csv,.xlsx,.json,.png,.jpg,.jpeg"
+            onChange={handleSelectFiles}
           />
         </label>
 
@@ -138,12 +193,32 @@ export function FileUploadSection({ defaultAuditNumber }) {
 
       <div className="upload-helper">
         <span>Formatos: {allowedUploadExtensions.map((item) => item.toUpperCase()).join(", ")}</span>
-        <span>Maximo: {formatFileSize(maxUploadSizeBytes)}</span>
-        {selectedFile ? <span>{formatFileSize(selectedFile.size)}</span> : null}
+        <span>Maximo total: {formatFileSize(maxUploadSizeBytes)}</span>
+        <span>Ya cargado: {formatFileSize(currentAuditUploadsTotalBytes)}</span>
+        <span>Seleccionado: {formatFileSize(selectedTotalBytes)}</span>
       </div>
 
-      {selectedFileError ? <div className="form-message error">{selectedFileError}</div> : null}
+      {selectedFilesError ? <div className="form-message error">{selectedFilesError}</div> : null}
       <div className={`form-message ${message.type}`}>{message.text}</div>
+
+      {selectedFiles.length ? (
+        <div className="selected-files">
+          <h3>Archivos seleccionados</h3>
+          {selectedFiles.map((file, index) => (
+            <div className="selected-file-row" key={`${file.name}-${file.lastModified}-${index}`}>
+              <div>
+                <strong>{file.name}</strong>
+                <span>
+                  {formatFileSize(file.size)} · {(file.name.split(".").pop() ?? "archivo").toUpperCase()} · pendiente
+                </span>
+              </div>
+              <button className="icon-button danger" type="button" onClick={() => handleRemoveSelectedFile(index)}>
+                Quitar
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
       <UploadedFilesTable uploads={uploads} onDelete={handleDelete} onReplace={handleReplace} />
     </section>
