@@ -1,34 +1,28 @@
-import { ClipboardCheck, FileSearch, Filter, Gauge, ShieldCheck, UploadCloud } from "lucide-react";
-import { NavLink } from "react-router-dom";
+import React from 'react'
+import { Home, FileText, Lock, Shield } from 'lucide-react'
 
 export function Navbar() {
   return (
-    <nav className="navbar">
-      <div className="nav-container">
-        <NavLink to="/" className="nav-logo">
-          <span className="nav-logo-mark">
-            <ClipboardCheck size={20} />
-          </span>
-          AuditIA
-        </NavLink>
-
-        <div className="nav-menu" aria-label="Vistas de auditoria">
-          <NavbarLink to="/" icon={Gauge} label="Panel" end />
-          <NavbarLink to="/casos" icon={FileSearch} label="Casos" />
-          <NavbarLink to="/archivos" icon={UploadCloud} label="Archivos" />
-          <NavbarLink to="/reglas" icon={Filter} label="Reglas" />
-          <NavbarLink to="/agente" icon={ShieldCheck} label="Agente" />
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-function NavbarLink({ to, icon: Icon, label, end }) {
-  return (
-    <NavLink to={to} end={end} className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}>
-      <Icon size={17} />
-      {label}
-    </NavLink>
-  );
+    <>
+        <nav className="navbar">
+            <div className="nav-container">
+                <div className="nav-left">
+                  <div className="brand-mark"><Shield size={20} /></div>
+                  <h2 className="nav-logo">AuditIA</h2>
+                </div>
+                <ul className="nav-menu">
+                    <li className="nav-item">
+                        <a href="/" className="nav-link nav-icon-link"><Home size={18} /> Inicio</a>
+                    </li>
+                    <li className="nav-item">
+                        <a href="/cases" className="nav-link nav-icon-link"><FileText size={18} /> Acerca de </a>
+                    </li>
+                    <li className="nav-item">
+                        <a href="/files" className="nav-link nav-icon-link"><FileText size={18} /> Contacto</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </>
+  )
 }
