@@ -6,9 +6,12 @@ import {
   Filter,
   Gauge,
   Search,
-  ShieldCheck
+  ShieldCheck,
+  UploadCloud
 } from "lucide-react";
 import { Navigate, NavLink, Route, Routes } from "react-router-dom";
+import { BusinessRulesDashboard } from "./components/BusinessRulesDashboard";
+import { FileUploadSection } from "./components/FileUploadSection";
 import { N8nAgentPanel } from "./components/N8nAgentPanel";
 import { auditCases } from "./data/auditCases";
 
@@ -49,6 +52,7 @@ function App() {
         <nav className="nav-list" aria-label="Vistas de auditoria">
           <NavItem to="/" icon={Gauge} label="Panel" end />
           <NavItem to="/casos" icon={FileSearch} label="Casos" />
+          <NavItem to="/archivos" icon={UploadCloud} label="Archivos" />
           <NavItem to="/reglas" icon={Filter} label="Reglas" />
           <NavItem to="/agente" icon={ShieldCheck} label="Agente" />
         </nav>
@@ -58,6 +62,7 @@ function App() {
         <Routes>
           <Route path="/" element={<DashboardPage selectedCase={selectedCase} />} />
           <Route path="/casos" element={<CasesPage selectedCase={selectedCase} />} />
+          <Route path="/archivos" element={<UploadsPage selectedCase={selectedCase} />} />
           <Route path="/reglas" element={<RulesPage />} />
           <Route path="/agente" element={<AgentPage selectedCase={selectedCase} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -126,29 +131,25 @@ function CasesPage({ selectedCase }) {
           ))}
         </div>
       </section>
+      <FileUploadSection defaultAuditNumber={selectedCase.claimNumber} />
     </>
   );
 }
 
 function RulesPage() {
-  const rules = [
-    "Comparar insumos facturados contra tarifario acordado por taller.",
-    "Detectar cargos duplicados por codigo, descripcion o evidencia adjunta.",
-    "Validar que la reparacion corresponda a la siniestralidad reportada.",
-    "Marcar documentacion incompleta antes de enviar aprobacion humana."
-  ];
-
   return (
     <>
-      <PageHeader eyebrow="Reglas" title="Criterios iniciales del auditor" />
-      <section className="rules-grid">
-        {rules.map((rule, index) => (
-          <article className="rule-card" key={rule}>
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <p>{rule}</p>
-          </article>
-        ))}
-      </section>
+      <PageHeader eyebrow="Reglas" title="Dashboard de reglas de negocio" />
+      <BusinessRulesDashboard />
+    </>
+  );
+}
+
+function UploadsPage({ selectedCase }) {
+  return (
+    <>
+      <PageHeader eyebrow="Archivos" title="Gestion de documentos para auditoria" />
+      <FileUploadSection defaultAuditNumber={selectedCase.claimNumber} />
     </>
   );
 }
