@@ -419,6 +419,16 @@ h3 {
   padding: 20px;
 }
 
+.case-detail.compact {
+  margin-top: 18px;
+}
+
+.section-note {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
 .upload-panel {
   margin-top: 18px;
 }

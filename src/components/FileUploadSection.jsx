@@ -31,6 +31,10 @@ export function FileUploadSection({ defaultAuditNumber }) {
     getUploads().then(setUploads);
   }, []);
 
+  useEffect(() => {
+    setAuditNumber(defaultAuditNumber);
+  }, [defaultAuditNumber]);
+
   const selectedTotalBytes = useMemo(
     () => selectedFiles.reduce((total, file) => total + file.size, 0),
     [selectedFiles]
