@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { BusinessRulesDashboard } from "../components/BusinessRulesDashboard";
 import { FileUploadSection } from "../components/FileUploadSection";
-import { N8nAgentPanel } from "../components/N8nAgentPanel";
 import { DenialReasonsCard, EmptyState, ErrorState, LoadingState, StatCard } from "../components/States";
 import { fetchCaseById, fetchCases } from "../services/caseService";
 import { getAuditHistory, getLatestAudit } from "../services/auditService";
@@ -84,7 +83,6 @@ export function DashboardPage() {
         <AuditHistoryPreview history={statistics?.latestAudits ?? []} />
         <div className="right-stack">
           <DenialReasonsCard reasons={denialReasons} />
-          <N8nAgentPanel auditCase={null} />
         </div>
       </section>
     </>
@@ -467,15 +465,6 @@ export function RulesPage() {
     <>
       <PageHeader eyebrow="Reglas" title="Dashboard de reglas de negocio" />
       <BusinessRulesDashboard />
-    </>
-  );
-}
-
-export function AgentPage() {
-  return (
-    <>
-      <PageHeader eyebrow="Agente" title="Conexion del agente auditable con n8n" />
-      <N8nAgentPanel auditCase={null} />
     </>
   );
 }

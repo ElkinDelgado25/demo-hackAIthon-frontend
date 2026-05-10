@@ -20,6 +20,8 @@ VITE_API_BASE_URL=http://localhost:8000/api
 
 El frontend consume solo datos reales desde el backend. Si la API falla, muestra un error controlado. Si la API responde vacio, muestra `Dato no disponible`.
 
+La guia para conectar el flujo completo con FastAPI esta en `docs/backend-integration.md`.
+
 ## Rutas
 
 La landing y el dashboard usan layouts separados:
@@ -34,7 +36,6 @@ La landing y el dashboard usan layouts separados:
 - `/dashboard/files`: acceso a gestion de documentos desde casos.
 - `/dashboard/rules`: reglas de negocio.
 - `/dashboard/history`: historial de auditorias por `caseId` en query string.
-- `/dashboard/agent`: integracion con n8n.
 
 ## Endpoints esperados
 
@@ -118,12 +119,3 @@ Los scripts iniciales se ejecutan automaticamente la primera vez que se crea el 
 
 - `database/init/01_schema.sql`
 - `database/init/02_seed.sql`
-
-## n8n
-
-Variables disponibles:
-
-```bash
-VITE_N8N_AUDITOR_EMBED_URL=https://tu-instancia-n8n/...
-VITE_N8N_AUDITOR_WEBHOOK_URL=https://tu-instancia-n8n/webhook/...
-```

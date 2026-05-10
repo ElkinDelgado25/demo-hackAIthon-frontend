@@ -308,7 +308,6 @@ h3 {
 .metric-card,
 .case-list,
 .case-detail,
-.agent-panel,
 .upload-panel,
 .rule-form,
 .rules-table-panel,
@@ -411,7 +410,6 @@ h3 {
 
 .case-list,
 .case-detail,
-.agent-panel,
 .upload-panel,
 .rule-form,
 .rules-table-panel,
@@ -581,8 +579,7 @@ h3 {
 
 .damage,
 .finding p,
-.empty-state p,
-.embed-placeholder p {
+.empty-state p {
   color: var(--muted);
   line-height: 1.5;
 }
@@ -732,20 +729,17 @@ textarea {
   font-size: 0.9rem;
 }
 
-.form-message.success,
-.agent-status.success {
+.form-message.success {
   color: var(--success);
   background: rgba(4, 0, 17, 0.08);
 }
 
-.form-message.error,
-.agent-status.error {
+.form-message.error {
   color: var(--danger);
   background: rgba(187, 2, 2, 0.12);
 }
 
 .form-message.info,
-.agent-status.loading,
 .file-status.procesado {
   color: var(--danger);
   background: rgba(187, 2, 2, 0.1);
@@ -813,8 +807,7 @@ textarea {
 
 .file-status.pendiente,
 .file-status.inactiva,
-.severity-pill.media,
-.agent-status.warning {
+.severity-pill.media {
   color: var(--orange-dark);
   background: rgba(247, 166, 37, 0.24);
 }
@@ -860,13 +853,6 @@ textarea {
   gap: 6px;
 }
 
-.agent-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin: 16px 0 12px;
-}
-
 .primary-action,
 .secondary-action {
   min-height: 40px;
@@ -895,48 +881,6 @@ textarea {
   color: var(--ink);
   border: 1px solid rgba(187, 2, 2, 0.2);
   background: var(--cream-soft);
-}
-
-.agent-status {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  color: #2d2519;
-  background: rgba(247, 166, 37, 0.17);
-}
-
-.n8n-frame,
-.embed-placeholder {
-  width: 100%;
-  min-height: 320px;
-  margin-top: 14px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: rgba(221, 211, 165, 0.42);
-}
-
-.n8n-frame {
-  display: block;
-}
-
-.embed-placeholder {
-  display: grid;
-  align-content: center;
-  gap: 10px;
-  padding: 22px;
-}
-
-.embed-placeholder code {
-  width: 100%;
-  overflow-x: auto;
-  display: block;
-  padding: 12px;
-  border-radius: 8px;
-  color: var(--red-dark);
-  background: rgba(247, 166, 37, 0.2);
 }
 
 @media (max-width: 980px) {

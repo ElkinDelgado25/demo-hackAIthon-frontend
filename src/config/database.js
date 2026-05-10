@@ -2,9 +2,7 @@ import { appConfig } from "./appConfig";
 
 export const databaseConfig = {
   provider: import.meta.env.VITE_DB_PROVIDER ?? "api",
-  apiBaseUrl: appConfig.apiBaseUrl,
-  n8nAuditWebhookUrl:
-    import.meta.env.VITE_N8N_AUDIT_WEBHOOK_URL ?? import.meta.env.VITE_N8N_AUDITOR_WEBHOOK_URL ?? ""
+  apiBaseUrl: appConfig.apiBaseUrl
 };
 
 export const apiEndpoints = {
