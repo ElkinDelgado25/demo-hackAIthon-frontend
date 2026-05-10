@@ -1,6 +1,10 @@
+import { appConfig } from "./appConfig";
+
 export const databaseConfig = {
   provider: import.meta.env.VITE_DB_PROVIDER ?? "api",
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3000",
+  apiBaseUrl: appConfig.apiBaseUrl,
+  useMocks: appConfig.useMocks,
+  allowMockFallback: appConfig.allowMockFallback,
   n8nAuditWebhookUrl:
     import.meta.env.VITE_N8N_AUDIT_WEBHOOK_URL ?? import.meta.env.VITE_N8N_AUDITOR_WEBHOOK_URL ?? ""
 };

@@ -1,6 +1,7 @@
 import { FileUp, UploadCloud } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { UploadedFilesTable } from "./UploadedFilesTable";
+import { useNavigate } from "react-router-dom";
+import { runAudit } from "../services/auditService";
 import {
   allowedUploadExtensions,
   createUpload,
@@ -9,23 +10,27 @@ import {
   formatFileSize,
   getUploads,
   maxUploadSizeBytes,
+  requiredDocumentTypes,
   validateAuditFile,
   validateAuditFilesTotal
-} from "../services/uploadsService";
+} from "../services/uploadService";
+import { UploadedFilesTable } from "./UploadedFilesTable";
 
 const documentOptions = [
-  { value: "factura", label: "Factura del taller" },
-  { value: "reporte", label: "Reporte del siniestro" },
-  { value: "tarifario", label: "Tarifario" }
+  { value: "FACTURA", label: "Factura" },
+  { value: "ORDEN_REPARACION", label: "Orden de reparacion" },
+  { value: "DETALLE_MANO_OBRA", label: "Detalle mano de obra" },
+  { value: "FOTOS_DANIO", label: "Fotos del dano" }
 ];
 
-export function FileUploadSection({ defaultAuditNumber }) {
+export function FileUploadSection({ defaultAuditNumber, auditCase }) {
+  const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [uploads, setUploads] = useState([]);
   const [auditNumber, setAuditNumber] = useState(defaultAuditNumber);
-  const [documentType, setDocumentType] = useState("factura");
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [message, setMessage] = useState({ type: "info", text: "Selecciona un documento para asociarlo a la auditoria." });
+  const [message, setMessage] = useState({ type: "info", text: "Selecciona documentos para asociarlos a la auditoria." });
+  const [isAuditing, setIsAuditing] = useState(false);
 
   useEffect(() => {
     getUploads().then(setUploads);
@@ -36,25 +41,29 @@ export function FileUploadSection({ defaultAuditNumber }) {
   }, [defaultAuditNumber]);
 
   const selectedTotalBytes = useMemo(
-    () => selectedFiles.reduce((total, file) => total + file.size, 0),
+    () => selectedFiles.reduce((total, item) => total + item.file.size, 0),
     [selectedFiles]
   );
-  const currentAuditUploadsTotalBytes = useMemo(() => {
+  const currentAuditUploads = useMemo(() => {
     const normalizedAuditNumber = auditNumber.trim();
-
-    return uploads
-      .filter((upload) => upload.auditNumber === normalizedAuditNumber)
-      .reduce((total, upload) => total + upload.size, 0);
+    return uploads.filter((upload) => upload.auditNumber === normalizedAuditNumber);
   }, [auditNumber, uploads]);
+  const currentAuditUploadsTotalBytes = useMemo(
+    () => currentAuditUploads.reduce((total, upload) => total + upload.size, 0),
+    [currentAuditUploads]
+  );
 
   const selectedFilesError = useMemo(() => {
-    const typeError = selectedFiles.map(validateAuditFile).find(Boolean);
+    const typeError = selectedFiles.map((item) => validateAuditFile(item.file)).find(Boolean);
 
     if (typeError) {
       return typeError;
     }
 
-    return validateAuditFilesTotal(selectedFiles, currentAuditUploadsTotalBytes);
+    return validateAuditFilesTotal(
+      selectedFiles.map((item) => item.file),
+      currentAuditUploadsTotalBytes
+    );
   }, [currentAuditUploadsTotalBytes, selectedFiles]);
 
   function handleSelectFiles(event) {
@@ -72,7 +81,10 @@ export function FileUploadSection({ defaultAuditNumber }) {
       return;
     }
 
-    const totalError = validateAuditFilesTotal(incomingFiles, selectedTotalBytes + currentAuditUploadsTotalBytes);
+    const totalError = validateAuditFilesTotal(
+      incomingFiles,
+      selectedTotalBytes + currentAuditUploadsTotalBytes
+    );
 
     if (totalError) {
       setMessage({ type: "error", text: totalError });
@@ -80,7 +92,13 @@ export function FileUploadSection({ defaultAuditNumber }) {
       return;
     }
 
-    setSelectedFiles((currentFiles) => [...currentFiles, ...incomingFiles]);
+    setSelectedFiles((currentFiles) => [
+      ...currentFiles,
+      ...incomingFiles.map((file) => ({
+        file,
+        documentType: suggestDocumentType(file.name)
+      }))
+    ]);
     setMessage({ type: "success", text: `${incomingFiles.length} archivo(s) agregado(s) a la cola.` });
     event.target.value = "";
   }
@@ -89,16 +107,55 @@ export function FileUploadSection({ defaultAuditNumber }) {
     setSelectedFiles((currentFiles) => currentFiles.filter((_, fileIndex) => fileIndex !== index));
   }
 
+  function handleChangeDocumentType(index, documentType) {
+    setSelectedFiles((currentFiles) =>
+      currentFiles.map((item, fileIndex) => (fileIndex === index ? { ...item, documentType } : item))
+    );
+  }
+
+  function validateRequiredDocuments() {
+    const documentTypes = new Set([
+      ...currentAuditUploads.map((upload) => upload.documentType),
+      ...selectedFiles.map((item) => item.documentType)
+    ]);
+    const missingTypes = requiredDocumentTypes.filter((documentType) => !documentTypes.has(documentType));
+
+    if (missingTypes.length > 0) {
+      return `Faltan documentos obligatorios: ${missingTypes.join(", ")}.`;
+    }
+
+    return "";
+  }
+
+  function buildAuditPayload(documents) {
+    return {
+      caseId: auditNumber.trim(),
+      vehicle: {
+        plate: auditCase?.plate ?? "",
+        model: auditCase?.vehicle ?? ""
+      },
+      reportedDamages: auditCase?.reportedDamages ?? [auditCase?.reportedDamage].filter(Boolean),
+      documents: documents.map((document) => ({
+        name: document.name,
+        type: document.documentType,
+        size: document.size,
+        mimeType: document.mimeType
+      })),
+      requestedBy: "Taller",
+      source: "frontend-dashboard"
+    };
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
 
     if (!auditNumber.trim()) {
-      setMessage({ type: "error", text: "Ingresa un numero de siniestro o auditoria." });
+      setMessage({ type: "error", text: "Selecciona o ingresa un numero de siniestro." });
       return;
     }
 
-    if (selectedFiles.length === 0) {
-      setMessage({ type: "error", text: "Selecciona al menos un archivo para cargar." });
+    if (selectedFiles.length === 0 && currentAuditUploads.length === 0) {
+      setMessage({ type: "error", text: "Selecciona al menos un archivo para auditar." });
       return;
     }
 
@@ -107,14 +164,35 @@ export function FileUploadSection({ defaultAuditNumber }) {
       return;
     }
 
+    const requiredDocumentsError = validateRequiredDocuments();
+
+    if (requiredDocumentsError) {
+      setMessage({ type: "error", text: requiredDocumentsError });
+      return;
+    }
+
+    setIsAuditing(true);
+    setMessage({ type: "info", text: "Ejecutando agente auditor" });
+
     try {
-      const newUploads = await createUploads({ files: selectedFiles, auditNumber: auditNumber.trim(), documentType });
+      const newUploads = selectedFiles.length
+        ? await createUploads({ files: selectedFiles, auditNumber: auditNumber.trim() })
+        : [];
+      const documents = [...newUploads, ...currentAuditUploads];
+      const payload = buildAuditPayload(documents);
+      const result = await runAudit(payload);
+
       setUploads((currentUploads) => [...newUploads, ...currentUploads]);
       setSelectedFiles([]);
-      fileInputRef.current.value = "";
-      setMessage({ type: "success", text: `${newUploads.length} archivo(s) cargado(s) correctamente.` });
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      setMessage({ type: "success", text: "Auditoria ejecutada correctamente." });
+      navigate(`/dashboard/cases/${auditNumber.trim()}/result`, { state: { result } });
     } catch (error) {
       setMessage({ type: "error", text: error.message });
+    } finally {
+      setIsAuditing(false);
     }
   }
 
@@ -132,6 +210,13 @@ export function FileUploadSection({ defaultAuditNumber }) {
     }
 
     try {
+      const validationError =
+        validateAuditFile(file) || validateAuditFilesTotal([file], currentAuditUploadsTotalBytes - upload.size);
+
+      if (validationError) {
+        throw new Error(validationError);
+      }
+
       const updatedUpload = await createUpload({
         file,
         auditNumber: upload.auditNumber,
@@ -166,17 +251,6 @@ export function FileUploadSection({ defaultAuditNumber }) {
           <input value={auditNumber} onChange={(event) => setAuditNumber(event.target.value)} placeholder="SIN-2026-0148" />
         </label>
 
-        <label>
-          Tipo de documento
-          <select value={documentType} onChange={(event) => setDocumentType(event.target.value)}>
-            {documentOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
         <label className="file-picker">
           <UploadCloud size={20} />
           <span>{selectedFiles.length ? `${selectedFiles.length} archivo(s) seleccionados` : "Seleccionar archivos"}</span>
@@ -189,9 +263,9 @@ export function FileUploadSection({ defaultAuditNumber }) {
           />
         </label>
 
-        <button className="primary-action" type="submit">
+        <button className="primary-action" type="submit" disabled={isAuditing}>
           <UploadCloud size={17} />
-          Cargar
+          {isAuditing ? "Ejecutando agente auditor" : "Subir y auditar"}
         </button>
       </form>
 
@@ -208,14 +282,21 @@ export function FileUploadSection({ defaultAuditNumber }) {
       {selectedFiles.length ? (
         <div className="selected-files">
           <h3>Archivos seleccionados</h3>
-          {selectedFiles.map((file, index) => (
-            <div className="selected-file-row" key={`${file.name}-${file.lastModified}-${index}`}>
+          {selectedFiles.map((item, index) => (
+            <div className="selected-file-row" key={`${item.file.name}-${item.file.lastModified}-${index}`}>
               <div>
-                <strong>{file.name}</strong>
+                <strong>{item.file.name}</strong>
                 <span>
-                  {formatFileSize(file.size)} · {(file.name.split(".").pop() ?? "archivo").toUpperCase()} · pendiente
+                  {formatFileSize(item.file.size)} - {(item.file.name.split(".").pop() ?? "archivo").toUpperCase()} - pendiente
                 </span>
               </div>
+              <select value={item.documentType} onChange={(event) => handleChangeDocumentType(index, event.target.value)}>
+                {documentOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <button className="icon-button danger" type="button" onClick={() => handleRemoveSelectedFile(index)}>
                 Quitar
               </button>
@@ -227,4 +308,22 @@ export function FileUploadSection({ defaultAuditNumber }) {
       <UploadedFilesTable uploads={uploads} onDelete={handleDelete} onReplace={handleReplace} />
     </section>
   );
+}
+
+function suggestDocumentType(fileName) {
+  const normalizedName = fileName.toLowerCase();
+
+  if (normalizedName.includes("orden")) {
+    return "ORDEN_REPARACION";
+  }
+
+  if (normalizedName.includes("mano") || normalizedName.includes("obra")) {
+    return "DETALLE_MANO_OBRA";
+  }
+
+  if (normalizedName.includes("foto") || normalizedName.endsWith(".png") || normalizedName.endsWith(".jpg") || normalizedName.endsWith(".jpeg")) {
+    return "FOTOS_DANIO";
+  }
+
+  return "FACTURA";
 }

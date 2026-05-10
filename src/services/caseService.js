@@ -1,5 +1,6 @@
 import { apiEndpoints, databaseConfig } from "../config/database";
-import { auditCases } from "../data/auditCases";
+import { mockCases } from "../mocks/casesMock";
+import { apiRequest } from "./apiClient";
 
 function normalizeCase(apiCase) {
   return {
@@ -34,19 +35,17 @@ function normalizeCaseStatus(status) {
   return statusMap[status] ?? status ?? "medio";
 }
 
-async function requestApi(path) {
-  const response = await fetch(`${databaseConfig.apiBaseUrl}${path}`);
-
-  if (!response.ok) {
-    throw new Error(`API respondio con estado ${response.status}`);
+export async function fetchCases() {
+  if (databaseConfig.useMocks) {
+    return {
+      cases: mockCases,
+      source: "mock",
+      error: null
+    };
   }
 
-  return response.json();
-}
-
-export async function fetchCases() {
   try {
-    const data = await requestApi(apiEndpoints.cases);
+    const data = await apiRequest(apiEndpoints.cases);
     const rows = Array.isArray(data) ? data : data.cases ?? [];
 
     return {
@@ -55,17 +54,29 @@ export async function fetchCases() {
       error: null
     };
   } catch (error) {
+    if (!databaseConfig.useMocks && !databaseConfig.allowMockFallback) {
+      throw error;
+    }
+
     return {
-      cases: auditCases,
-      source: "mock",
+      cases: mockCases,
+      source: databaseConfig.useMocks ? "mock" : "fallback",
       error
     };
   }
 }
 
 export async function fetchNewCases() {
+  if (databaseConfig.useMocks) {
+    return {
+      cases: [],
+      source: "mock",
+      error: null
+    };
+  }
+
   try {
-    const data = await requestApi(apiEndpoints.newCases);
+    const data = await apiRequest(apiEndpoints.newCases);
     const rows = Array.isArray(data) ? data : data.cases ?? [];
 
     return {
@@ -83,7 +94,11 @@ export async function fetchNewCases() {
 }
 
 export async function fetchCaseById(id) {
-  const data = await requestApi(apiEndpoints.caseById(id));
+  if (databaseConfig.useMocks) {
+    return mockCases.find((auditCase) => auditCase.id === id || auditCase.claimNumber === id) ?? mockCases[0];
+  }
+
+  const data = await apiRequest(apiEndpoints.caseById(id));
   return normalizeCase(data);
 }
 
@@ -104,5 +119,5 @@ export async function createAuditResult(payload) {
 }
 
 export async function fetchAuditResults(caseId) {
-  return requestApi(apiEndpoints.auditResultsByCaseId(caseId));
+  return apiRequest(apiEndpoints.auditResultsByCaseId(caseId));
 }

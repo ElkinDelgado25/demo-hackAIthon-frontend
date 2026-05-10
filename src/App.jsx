@@ -1,7 +1,17 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { DashboardLayout } from "./components/DashboardLayout";
 import { Navbar } from "./components/Navbar";
-import { AgentPage, CasesPage, DashboardPage, RulesPage, UploadsPage } from "./pages/AuditPages";
+import {
+  AgentPage,
+  AuditHistoryPage,
+  AuditResultPage,
+  CaseDetailPage,
+  CasesPage,
+  DashboardPage,
+  RulesPage,
+  UploadFilesPage,
+  UploadsPage
+} from "./pages/AuditPages";
 import { Homepage } from "./pages/HomePage";
 
 function App() {
@@ -20,8 +30,12 @@ function App() {
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<DashboardPage />} />
         <Route path="cases" element={<CasesPage />} />
+        <Route path="cases/:caseId" element={<CaseDetailPage />} />
+        <Route path="cases/:caseId/upload" element={<UploadFilesPage />} />
+        <Route path="cases/:caseId/result" element={<AuditResultPage />} />
         <Route path="files" element={<UploadsPage />} />
         <Route path="rules" element={<RulesPage />} />
+        <Route path="history" element={<AuditHistoryPage />} />
         <Route path="agent" element={<AgentPage />} />
       </Route>
 

@@ -9,7 +9,7 @@ import {
   getBusinessRules,
   toggleBusinessRule,
   updateBusinessRule
-} from "../services/businessRulesService";
+} from "../services/businessRuleService";
 
 const defaultFilters = {
   search: "",

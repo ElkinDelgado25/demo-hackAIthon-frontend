@@ -7,6 +7,7 @@ export const uploadEndpoints = {
 };
 
 export const allowedUploadExtensions = ["pdf", "csv", "xlsx", "json", "png", "jpg", "jpeg"];
+export const requiredDocumentTypes = ["FACTURA", "ORDEN_REPARACION", "DETALLE_MANO_OBRA", "FOTOS_DANIO"];
 export const maxUploadSizeBytes = 20 * 1024 * 1024;
 
 function readUploads() {
@@ -104,8 +105,9 @@ export async function createUpload({ file, auditNumber, documentType, replaceId 
 export async function createUploads({ files, auditNumber, documentType }) {
   const uploads = [];
 
-  for (const file of files) {
-    const upload = await createUpload({ file, auditNumber, documentType });
+  for (const item of files) {
+    const file = item.file ?? item;
+    const upload = await createUpload({ file, auditNumber, documentType: item.documentType ?? documentType });
     uploads.push(upload);
   }
 

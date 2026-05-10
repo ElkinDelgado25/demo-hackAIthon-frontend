@@ -1,4 +1,4 @@
-import { ClipboardCheck, FileSearch, Filter, Gauge, ShieldCheck, UploadCloud } from "lucide-react";
+import { ClipboardCheck, FileSearch, Filter, Gauge, History, ShieldCheck, UploadCloud } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 
 export function DashboardLayout() {
@@ -20,6 +20,7 @@ export function DashboardLayout() {
           <SidebarLink to="/dashboard/cases" icon={FileSearch} label="Casos" />
           <SidebarLink to="/dashboard/files" icon={UploadCloud} label="Archivos" />
           <SidebarLink to="/dashboard/rules" icon={Filter} label="Reglas" />
+          <SidebarLink to="/dashboard/history" icon={History} label="Historial" />
           <SidebarLink to="/dashboard/agent" icon={ShieldCheck} label="Agente" />
         </nav>
       </aside>
