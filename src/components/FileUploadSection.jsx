@@ -4,16 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { runAudit } from "../services/auditService";
 import {
   allowedUploadExtensions,
-  createUpload,
-  createUploads,
-  deleteUpload,
   formatFileSize,
-  getUploads,
+  getDocuments,
   maxUploadSizeBytes,
   requiredDocumentTypes,
+  uploadDocuments,
   validateAuditFile,
   validateAuditFilesTotal
 } from "../services/uploadService";
+import { ErrorState, LoadingState } from "./States";
 import { UploadedFilesTable } from "./UploadedFilesTable";
 
 const documentOptions = [
@@ -27,30 +26,58 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
   const [uploads, setUploads] = useState([]);
-  const [auditNumber, setAuditNumber] = useState(defaultAuditNumber);
+  const [auditNumber, setAuditNumber] = useState(defaultAuditNumber ?? "");
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [message, setMessage] = useState({ type: "info", text: "Selecciona documentos para asociarlos a la auditoria." });
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
+  const [documentsError, setDocumentsError] = useState("");
   const [isAuditing, setIsAuditing] = useState(false);
 
   useEffect(() => {
-    getUploads().then(setUploads);
-  }, []);
+    setAuditNumber(defaultAuditNumber ?? "");
+  }, [defaultAuditNumber]);
 
   useEffect(() => {
-    setAuditNumber(defaultAuditNumber);
-  }, [defaultAuditNumber]);
+    const normalizedAuditNumber = auditNumber.trim();
+
+    if (!normalizedAuditNumber) {
+      setUploads([]);
+      return;
+    }
+
+    let isMounted = true;
+    setIsLoadingDocuments(true);
+    setDocumentsError("");
+
+    getDocuments(normalizedAuditNumber)
+      .then((documents) => {
+        if (isMounted) {
+          setUploads(documents.map(normalizeDocument));
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setDocumentsError("No se pudo consultar la informacion. Verifique la conexion con el backend.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoadingDocuments(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [auditNumber]);
 
   const selectedTotalBytes = useMemo(
     () => selectedFiles.reduce((total, item) => total + item.file.size, 0),
     [selectedFiles]
   );
-  const currentAuditUploads = useMemo(() => {
-    const normalizedAuditNumber = auditNumber.trim();
-    return uploads.filter((upload) => upload.auditNumber === normalizedAuditNumber);
-  }, [auditNumber, uploads]);
   const currentAuditUploadsTotalBytes = useMemo(
-    () => currentAuditUploads.reduce((total, upload) => total + upload.size, 0),
-    [currentAuditUploads]
+    () => uploads.reduce((total, upload) => total + Number(upload.size ?? 0), 0),
+    [uploads]
   );
 
   const selectedFilesError = useMemo(() => {
@@ -115,7 +142,7 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
 
   function validateRequiredDocuments() {
     const documentTypes = new Set([
-      ...currentAuditUploads.map((upload) => upload.documentType),
+      ...uploads.map((upload) => upload.documentType),
       ...selectedFiles.map((item) => item.documentType)
     ]);
     const missingTypes = requiredDocumentTypes.filter((documentType) => !documentTypes.has(documentType));
@@ -154,7 +181,7 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
       return;
     }
 
-    if (selectedFiles.length === 0 && currentAuditUploads.length === 0) {
+    if (selectedFiles.length === 0 && uploads.length === 0) {
       setMessage({ type: "error", text: "Selecciona al menos un archivo para auditar." });
       return;
     }
@@ -175,14 +202,15 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
     setMessage({ type: "info", text: "Ejecutando agente auditor" });
 
     try {
-      const newUploads = selectedFiles.length
-        ? await createUploads({ files: selectedFiles, auditNumber: auditNumber.trim() })
-        : [];
-      const documents = [...newUploads, ...currentAuditUploads];
+      const uploadResponse = selectedFiles.length ? await uploadDocuments(auditNumber.trim(), selectedFiles) : null;
+      const uploadedDocuments = normalizeDocumentsResponse(uploadResponse);
+      const documents = uploadedDocuments.length ? uploadedDocuments : uploads;
       const payload = buildAuditPayload(documents);
-      const result = await runAudit(payload);
+      const result = await runAudit(auditNumber.trim(), payload);
 
-      setUploads((currentUploads) => [...newUploads, ...currentUploads]);
+      if (uploadedDocuments.length) {
+        setUploads(uploadedDocuments);
+      }
       setSelectedFiles([]);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -190,46 +218,9 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
       setMessage({ type: "success", text: "Auditoria ejecutada correctamente." });
       navigate(`/dashboard/cases/${auditNumber.trim()}/result`, { state: { result } });
     } catch (error) {
-      setMessage({ type: "error", text: error.message });
+      setMessage({ type: "error", text: error.message || "No se pudo consultar la informacion. Verifique la conexion con el backend." });
     } finally {
       setIsAuditing(false);
-    }
-  }
-
-  async function handleDelete(id) {
-    await deleteUpload(id);
-    setUploads((currentUploads) => currentUploads.filter((upload) => upload.id !== id));
-    setMessage({ type: "success", text: "Archivo eliminado de la auditoria." });
-  }
-
-  async function handleReplace(upload, event) {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      return;
-    }
-
-    try {
-      const validationError =
-        validateAuditFile(file) || validateAuditFilesTotal([file], currentAuditUploadsTotalBytes - upload.size);
-
-      if (validationError) {
-        throw new Error(validationError);
-      }
-
-      const updatedUpload = await createUpload({
-        file,
-        auditNumber: upload.auditNumber,
-        documentType: upload.documentType,
-        replaceId: upload.id
-      });
-
-      setUploads((currentUploads) => currentUploads.map((item) => (item.id === upload.id ? updatedUpload : item)));
-      setMessage({ type: "success", text: `${upload.name} fue reemplazado por ${file.name}.` });
-    } catch (error) {
-      setMessage({ type: "error", text: error.message });
-    } finally {
-      event.target.value = "";
     }
   }
 
@@ -276,6 +267,8 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
         <span>Seleccionado: {formatFileSize(selectedTotalBytes)}</span>
       </div>
 
+      {isLoadingDocuments ? <LoadingState message="Consultando documentos del caso..." /> : null}
+      {documentsError ? <ErrorState message={documentsError} /> : null}
       {selectedFilesError ? <div className="form-message error">{selectedFilesError}</div> : null}
       <div className={`form-message ${message.type}`}>{message.text}</div>
 
@@ -305,9 +298,29 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
         </div>
       ) : null}
 
-      <UploadedFilesTable uploads={uploads} onDelete={handleDelete} onReplace={handleReplace} />
+      <UploadedFilesTable uploads={uploads} />
     </section>
   );
+}
+
+function normalizeDocumentsResponse(response) {
+  const documents = Array.isArray(response) ? response : response?.documents ?? response?.items ?? [];
+  return documents.map(normalizeDocument);
+}
+
+function normalizeDocument(document) {
+  return {
+    id: document.id ?? document.documentId ?? document.name,
+    auditNumber: document.auditNumber ?? document.caseId ?? document.case_id ?? "",
+    documentType: document.documentType ?? document.type ?? document.document_type ?? "",
+    name: document.name ?? document.filename ?? document.fileName ?? "Dato no disponible",
+    size: Number(document.size ?? 0),
+    type: document.fileType ?? document.extension ?? document.mimeType ?? document.mime_type ?? "",
+    mimeType: document.mimeType ?? document.mime_type ?? "",
+    uploadedAt: document.uploadedAt ?? document.createdAt ?? document.created_at ?? "",
+    status: document.status ?? "cargado",
+    extractionStatus: document.extractionStatus ?? document.extraction_status ?? "Dato no disponible"
+  };
 }
 
 function suggestDocumentType(fileName) {

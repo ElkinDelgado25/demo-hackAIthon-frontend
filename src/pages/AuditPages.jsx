@@ -1,12 +1,13 @@
 import { AlertTriangle, CheckCircle2, FileSearch, Filter, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { BusinessRulesDashboard } from "../components/BusinessRulesDashboard";
 import { FileUploadSection } from "../components/FileUploadSection";
 import { N8nAgentPanel } from "../components/N8nAgentPanel";
-import { auditCases } from "../data/auditCases";
+import { DenialReasonsCard, EmptyState, ErrorState, LoadingState, StatCard } from "../components/States";
 import { fetchCaseById, fetchCases } from "../services/caseService";
-import { getAuditHistory, getAuditResult } from "../services/auditService";
+import { getAuditHistory, getLatestAudit } from "../services/auditService";
+import { fetchDashboardStatistics, fetchDenialReasons } from "../services/statisticsService";
 
 const statusCopy = {
   alto: "Riesgo alto",
@@ -27,33 +28,63 @@ const currency = new Intl.NumberFormat("es-EC", {
 });
 
 const POLLING_INTERVAL_MS = 5 * 60 * 1000;
+const unavailable = "Dato no disponible";
 
 export function DashboardPage() {
-  const [cases, setCases] = useState(auditCases);
-  const [selectedCase, setSelectedCase] = useState(auditCases[0]);
-  const [history, setHistory] = useState([]);
+  const [statistics, setStatistics] = useState(null);
+  const [denialReasons, setDenialReasons] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    setSelectedCase((currentCase) => cases.find((auditCase) => auditCase.id === currentCase?.id) ?? cases[0]);
-  }, [cases]);
+    let isMounted = true;
 
-  useEffect(() => {
-    fetchCases().then((result) => setCases(result.cases));
-    getAuditHistory().then(setHistory);
+    async function loadDashboardData() {
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const [dashboardStatistics, reasons] = await Promise.all([
+          fetchDashboardStatistics(),
+          fetchDenialReasons()
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setStatistics(dashboardStatistics);
+        setDenialReasons(reasons);
+      } catch {
+        if (isMounted) {
+          setError("No se pudo consultar la informacion. Verifique la conexion con el backend.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadDashboardData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
     <>
       <PageHeader eyebrow="Reto 2" title="Auditor agentico de facturacion de siniestros" />
-      <Metrics cases={cases} />
+      {isLoading ? <LoadingState /> : null}
+      {error ? <ErrorState message={error} /> : null}
+      <Metrics statistics={statistics} />
 
       <section className="content-grid">
-        <CaseInbox cases={cases} selectedCase={selectedCase} onSelectCase={setSelectedCase} />
-
+        <AuditHistoryPreview history={statistics?.latestAudits ?? []} />
         <div className="right-stack">
-          <CaseDetail selectedCase={selectedCase} />
-          <AuditHistoryPreview history={history} />
-          <N8nAgentPanel auditCase={selectedCase} />
+          <DenialReasonsCard reasons={denialReasons} />
+          <N8nAgentPanel auditCase={null} />
         </div>
       </section>
     </>
@@ -61,37 +92,55 @@ export function DashboardPage() {
 }
 
 export function CasesPage() {
-  const [cases, setCases] = useState(auditCases);
-  const [selectedCase, setSelectedCase] = useState(auditCases[0]);
-  const [isUsingMock, setIsUsingMock] = useState(false);
+  const [cases, setCases] = useState([]);
+  const [selectedCase, setSelectedCase] = useState(null);
   const [newCasesCount, setNewCasesCount] = useState(0);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const casesRef = useRef(auditCases);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const casesRef = useRef([]);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadCases({ silent = false } = {}) {
-      const previousCaseIds = new Set(casesRef.current.map((auditCase) => auditCase.id));
-      const result = await fetchCases();
+      const previousCaseIds = new Set(casesRef.current.map((auditCase) => auditCase.id || auditCase.claimNumber));
 
-      if (!isMounted) {
-        return;
-      }
+      try {
+        if (!silent) {
+          setIsLoading(true);
+        }
 
-      const incomingCases = result.cases;
-      const detectedNewCases = incomingCases.filter((auditCase) => !previousCaseIds.has(auditCase.id)).length;
+        const incomingCases = await fetchCases();
+        const detectedNewCases = incomingCases.filter(
+          (auditCase) => !previousCaseIds.has(auditCase.id || auditCase.claimNumber)
+        ).length;
 
-      casesRef.current = incomingCases;
-      setCases(incomingCases);
-      setSelectedCase((currentCase) => incomingCases.find((auditCase) => auditCase.id === currentCase?.id) ?? incomingCases[0]);
-      setIsUsingMock(result.source === "mock");
-      setLastUpdated(new Date());
+        if (!isMounted) {
+          return;
+        }
 
-      if (silent && detectedNewCases > 0) {
-        setNewCasesCount(detectedNewCases);
+        casesRef.current = incomingCases;
+        setCases(incomingCases);
+        setSelectedCase((currentCase) =>
+          incomingCases.find((auditCase) => getCaseKey(auditCase) === getCaseKey(currentCase)) ?? incomingCases[0] ?? null
+        );
+        setLastUpdated(new Date());
+        setError("");
+
+        if (silent && detectedNewCases > 0) {
+          setNewCasesCount(detectedNewCases);
+        }
+      } catch {
+        if (isMounted) {
+          setError("No se pudo consultar la informacion. Verifique la conexion con el backend.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -129,7 +178,8 @@ export function CasesPage() {
             <Filter size={18} />
           </button>
         </div>
-        {isUsingMock ? <div className="form-message info">Usando datos de demostracion</div> : null}
+        {isLoading ? <LoadingState /> : null}
+        {error ? <ErrorState message={error} /> : null}
         {newCasesCount > 0 ? (
           <div className="form-message success">{newCasesCount} caso(s) nuevo(s) detectado(s) en la ultima actualizacion.</div>
         ) : null}
@@ -149,6 +199,7 @@ export function CasesPage() {
               <option value="NUEVO">NUEVO</option>
               <option value="PENDIENTE_DOCUMENTOS">PENDIENTE_DOCUMENTOS</option>
               <option value="LISTO_PARA_AUDITORIA">LISTO_PARA_AUDITORIA</option>
+              <option value="EN_AUDITORIA">EN_AUDITORIA</option>
               <option value="OBSERVADO">OBSERVADO</option>
               <option value="APROBADO">APROBADO</option>
               <option value="DENEGADO">DENEGADO</option>
@@ -156,16 +207,21 @@ export function CasesPage() {
             </select>
           </label>
         </div>
-        <div className="cases-table">
-          {filteredCases.map((auditCase) => (
-            <CaseRow
-              key={auditCase.id}
-              auditCase={auditCase}
-              active={auditCase.id === selectedCase?.id}
-              onSelectCase={setSelectedCase}
-            />
-          ))}
-        </div>
+        {!error && filteredCases.length === 0 && !isLoading ? (
+          <EmptyState detail="No existen casos asignados actualmente." />
+        ) : null}
+        {!error && filteredCases.length > 0 ? (
+          <div className="cases-table">
+            {filteredCases.map((auditCase) => (
+              <CaseRow
+                key={auditCase.id || auditCase.claimNumber}
+                auditCase={auditCase}
+                active={getCaseKey(auditCase) === getCaseKey(selectedCase)}
+                onSelectCase={setSelectedCase}
+              />
+            ))}
+          </div>
+        ) : null}
       </section>
       {selectedCase ? <CaseDetail selectedCase={selectedCase} compact /> : null}
       {selectedCase ? (
@@ -183,12 +239,15 @@ export function CasesPage() {
 }
 
 export function UploadsPage() {
-  const selectedCase = auditCases[0];
-
   return (
     <>
       <PageHeader eyebrow="Archivos" title="Gestion de documentos para auditoria" />
-      <FileUploadSection defaultAuditNumber={selectedCase.claimNumber} auditCase={selectedCase} />
+      <EmptyState detail="Selecciona un caso desde la bandeja para cargar documentos reales." />
+      <div className="page-actions">
+        <Link className="primary-action" to="/dashboard/cases">
+          Ir a casos
+        </Link>
+      </div>
     </>
   );
 }
@@ -196,25 +255,49 @@ export function UploadsPage() {
 export function CaseDetailPage() {
   const { caseId } = useParams();
   const [auditCase, setAuditCase] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
+
     fetchCaseById(caseId)
-      .then(setAuditCase)
-      .catch((requestError) => setError(requestError.message));
+      .then((data) => {
+        if (isMounted) {
+          setAuditCase(data);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setError("No se pudo consultar la informacion. Verifique la conexion con el backend.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [caseId]);
 
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
   if (error) {
-    return <div className="form-message error">{error}</div>;
+    return <ErrorState message={error} />;
   }
 
   if (!auditCase) {
-    return <div className="form-message info">Cargando caso...</div>;
+    return <EmptyState detail="No existe informacion registrada para este caso." />;
   }
 
   return (
     <>
-      <PageHeader eyebrow="Detalle" title={auditCase.claimNumber} />
+      <PageHeader eyebrow="Detalle" title={auditCase.claimNumber || unavailable} />
       <CaseDetail selectedCase={auditCase} />
       <div className="page-actions">
         <Link className="primary-action" to={`/dashboard/cases/${auditCase.claimNumber}/upload`}>
@@ -231,18 +314,49 @@ export function CaseDetailPage() {
 export function UploadFilesPage() {
   const { caseId } = useParams();
   const [auditCase, setAuditCase] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchCaseById(caseId).then(setAuditCase);
+    let isMounted = true;
+
+    fetchCaseById(caseId)
+      .then((data) => {
+        if (isMounted) {
+          setAuditCase(data);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setError("No se pudo consultar la informacion. Verifique la conexion con el backend.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [caseId]);
 
+  if (isLoading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
+    return <ErrorState message={error} />;
+  }
+
   if (!auditCase) {
-    return <div className="form-message info">Cargando caso...</div>;
+    return <EmptyState detail="No existe informacion registrada para este caso." />;
   }
 
   return (
     <>
-      <PageHeader eyebrow="Subida" title={`Documentos para ${auditCase.claimNumber}`} />
+      <PageHeader eyebrow="Subida" title={`Documentos para ${auditCase.claimNumber || unavailable}`} />
       <CaseDetail selectedCase={auditCase} compact />
       <FileUploadSection defaultAuditNumber={auditCase.claimNumber} auditCase={auditCase} />
     </>
@@ -253,32 +367,97 @@ export function AuditResultPage() {
   const { caseId } = useParams();
   const location = useLocation();
   const [result, setResult] = useState(location.state?.result ?? null);
+  const [isLoading, setIsLoading] = useState(!location.state?.result);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!result) {
-      getAuditResult(caseId).then(setResult);
+    if (result) {
+      return;
     }
+
+    let isMounted = true;
+
+    getLatestAudit(caseId)
+      .then((data) => {
+        if (isMounted) {
+          setResult(data);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setError("No se pudo consultar la informacion. Verifique la conexion con el backend.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [caseId, result]);
 
   return (
     <>
       <PageHeader eyebrow="Resultado" title={`Resultado de auditoria ${caseId}`} />
-      {result ? <AuditResultCard result={result} /> : <div className="form-message info">No hay resultado registrado para este caso.</div>}
+      {isLoading ? <LoadingState /> : null}
+      {error ? <ErrorState message={error} /> : null}
+      {!isLoading && !error && result ? (
+        <AuditResultCard result={result} />
+      ) : null}
+      {!isLoading && !error && !result ? (
+        <EmptyState detail="Este caso aun no tiene auditoria registrada." />
+      ) : null}
     </>
   );
 }
 
 export function AuditHistoryPage() {
+  const params = useParams();
+  const [searchParams] = useSearchParams();
+  const caseId = params.caseId ?? searchParams.get("caseId");
   const [history, setHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(Boolean(caseId));
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    getAuditHistory().then(setHistory);
-  }, []);
+    if (!caseId) {
+      return;
+    }
+
+    let isMounted = true;
+
+    getAuditHistory(caseId)
+      .then((data) => {
+        if (isMounted) {
+          setHistory(data);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setError("No se pudo consultar la informacion. Verifique la conexion con el backend.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [caseId]);
 
   return (
     <>
       <PageHeader eyebrow="Historial" title="Ultimas auditorias ejecutadas" />
-      <AuditHistoryPreview history={history} />
+      {!caseId ? <EmptyState detail="No existen auditorias previas." /> : null}
+      {isLoading ? <LoadingState /> : null}
+      {error ? <ErrorState message={error} /> : null}
+      {caseId && !isLoading && !error ? <AuditHistoryPreview history={history} /> : null}
     </>
   );
 }
@@ -293,12 +472,10 @@ export function RulesPage() {
 }
 
 export function AgentPage() {
-  const selectedCase = auditCases[0];
-
   return (
     <>
       <PageHeader eyebrow="Agente" title="Conexion del agente auditable con n8n" />
-      <N8nAgentPanel auditCase={selectedCase} />
+      <N8nAgentPanel auditCase={null} />
     </>
   );
 }
@@ -318,52 +495,16 @@ function PageHeader({ eyebrow, title }) {
   );
 }
 
-function Metrics({ cases }) {
-  const totalAtRisk = cases.reduce((sum, item) => sum + Math.max(item.invoiceTotal - item.tariffTotal, 0), 0);
-  const reviewedCases = cases.filter((item) => item.status !== "bajo").length;
-  const approvedCases = cases.filter((item) => item.rawStatus === "APROBADO").length;
-  const observedCases = cases.filter((item) => item.rawStatus === "OBSERVADO" || item.status === "alto").length;
-  const deniedCases = cases.filter((item) => item.rawStatus === "DENEGADO").length;
-
+function Metrics({ statistics }) {
   return (
     <section className="metrics" aria-label="Resumen de auditoria">
-      <Metric label="Casos recibidos" value={cases.length.toString()} />
-      <Metric label="Por revisar" value={reviewedCases.toString()} />
-      <Metric label="Aprobados" value={approvedCases.toString()} />
-      <Metric label="Observados" value={observedCases.toString()} />
-      <Metric label="Denegados" value={deniedCases.toString()} />
-      <Metric label="Monto observado" value={currency.format(totalAtRisk)} />
+      <StatCard label="Casos auditados" value={statistics?.totalCases} />
+      <StatCard label="Aprobados" value={statistics?.approvedCases} />
+      <StatCard label="Con discrepancias" value={statistics?.observedCases} />
+      <StatCard label="Denegados" value={statistics?.deniedCases} />
+      <StatCard label="Revision humana" value={statistics?.humanReviewCases} />
+      <StatCard label="Aprobacion" value={isAvailable(statistics?.approvalRate) ? `${statistics.approvalRate}%` : null} />
     </section>
-  );
-}
-
-function Metric({ label, value }) {
-  return (
-    <div className="metric-card">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
-  );
-}
-
-function CaseInbox({ cases, selectedCase, onSelectCase }) {
-  return (
-    <div className="case-list" aria-label="Bandeja de siniestros">
-      <div className="section-heading">
-        <h2>Bandeja de auditoria</h2>
-        <button className="icon-button" aria-label="Filtrar casos">
-          <Filter size={18} />
-        </button>
-      </div>
-      {cases.map((auditCase) => (
-        <CaseRow
-          key={auditCase.id}
-          auditCase={auditCase}
-          active={auditCase.id === selectedCase?.id}
-          onSelectCase={onSelectCase}
-        />
-      ))}
-    </div>
   );
 }
 
@@ -372,12 +513,12 @@ function CaseDetail({ selectedCase, compact }) {
     <article className={`case-detail ${compact ? "compact" : ""}`} aria-label="Detalle del siniestro seleccionado">
       <div className="detail-header">
         <div>
-          <span className={`status-pill ${selectedCase.status}`}>{statusCopy[selectedCase.status]}</span>
-          <h2>{selectedCase.claimNumber}</h2>
-          <p>{selectedCase.vehicle}</p>
+          <span className={`status-pill ${selectedCase.status}`}>{statusCopy[selectedCase.status] ?? unavailable}</span>
+          <h2>{selectedCase.claimNumber || unavailable}</h2>
+          <p>{selectedCase.vehicle || unavailable}</p>
         </div>
         <div className="confidence">
-          <strong>{selectedCase.confidence}%</strong>
+          <strong>{isAvailable(selectedCase.confidence) ? `${selectedCase.confidence}%` : unavailable}</strong>
           <span>confianza</span>
         </div>
       </div>
@@ -385,43 +526,46 @@ function CaseDetail({ selectedCase, compact }) {
       <div className="summary-band">
         <div>
           <span>Taller</span>
-          <strong>{selectedCase.workshop}</strong>
+          <strong>{selectedCase.workshop || unavailable}</strong>
         </div>
         <div>
           <span>Placa</span>
-          <strong>{selectedCase.plate ?? "Sin placa"}</strong>
+          <strong>{selectedCase.plate || unavailable}</strong>
         </div>
         <div>
           <span>Factura</span>
-          <strong>{currency.format(selectedCase.invoiceTotal)}</strong>
+          <strong>{isAvailable(selectedCase.invoiceTotal) ? currency.format(selectedCase.invoiceTotal) : unavailable}</strong>
         </div>
         <div>
-          <span>Tarifario</span>
-          <strong>{currency.format(selectedCase.tariffTotal)}</strong>
+          <span>Estimado</span>
+          <strong>{isAvailable(selectedCase.tariffTotal) ? currency.format(selectedCase.tariffTotal) : unavailable}</strong>
         </div>
       </div>
 
-      <p className="damage">{selectedCase.reportedDamage}</p>
+      <p className="damage">{selectedCase.reportedDamage || unavailable}</p>
 
       <div className="findings">
         <h3>Hallazgos del agente</h3>
-        {selectedCase.findings.map((finding) => (
-          <div className="finding" key={finding.id}>
-            <div>
-              <strong>{finding.title}</strong>
-              <p>{finding.detail}</p>
+        {selectedCase.findings.length === 0 ? (
+          <EmptyState detail="No existen hallazgos registrados para este caso." />
+        ) : (
+          selectedCase.findings.map((finding) => (
+            <div className="finding" key={finding.id ?? finding.title}>
+              <div>
+                <strong>{finding.title || unavailable}</strong>
+                <p>{finding.detail || finding.message || unavailable}</p>
+              </div>
+              <span>{isAvailable(finding.impact) ? currency.format(finding.impact) : unavailable}</span>
             </div>
-            <span>{currency.format(finding.impact)}</span>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </article>
   );
 }
 
 function CaseRow({ auditCase, active, onSelectCase }) {
-  const Icon = statusIcon[auditCase.status];
-  const difference = auditCase.invoiceTotal - auditCase.tariffTotal;
+  const Icon = statusIcon[auditCase.status] ?? FileSearch;
 
   return (
     <button type="button" className={`case-row ${active ? "active" : ""}`} onClick={() => onSelectCase?.(auditCase)}>
@@ -429,12 +573,12 @@ function CaseRow({ auditCase, active, onSelectCase }) {
         <Icon size={18} />
       </div>
       <div className="case-copy">
-        <strong>{auditCase.claimNumber}</strong>
-        <span>{auditCase.plate ? `${auditCase.plate} - ` : ""}{auditCase.vehicle}</span>
+        <strong>{auditCase.claimNumber || unavailable}</strong>
+        <span>{auditCase.plate ? `${auditCase.plate} - ` : ""}{auditCase.vehicle || unavailable}</span>
       </div>
       <div className="case-amount">
-        <strong>{currency.format(auditCase.invoiceTotal)}</strong>
-        <span>{auditCase.rawStatus ?? (difference > 0 ? `+${currency.format(difference)}` : "Sin desvio")}</span>
+        <strong>{isAvailable(auditCase.invoiceTotal) ? currency.format(auditCase.invoiceTotal) : unavailable}</strong>
+        <span>{auditCase.rawStatus || unavailable}</span>
       </div>
     </button>
   );
@@ -445,28 +589,32 @@ function AuditResultCard({ result }) {
     <section className="route-panel">
       <div className="detail-header">
         <div>
-          <span className={`status-pill ${result.status === "APROBADO" ? "bajo" : "alto"}`}>{result.status}</span>
-          <h2>{result.auditId}</h2>
-          <p>{result.summary}</p>
+          <span className={`status-pill ${result.status === "APROBADO" ? "bajo" : "alto"}`}>{result.status || unavailable}</span>
+          <h2>{result.auditId || unavailable}</h2>
+          <p>{result.summary || unavailable}</p>
         </div>
         <div className="confidence">
-          <strong>{Math.round((result.confidence ?? 0) * 100)}%</strong>
+          <strong>{isAvailable(result.confidence) ? `${Math.round(result.confidence * 100)}%` : unavailable}</strong>
           <span>confianza</span>
         </div>
       </div>
       <div className="findings">
         <h3>Discrepancias</h3>
-        {(result.discrepancies ?? []).map((item, index) => (
-          <div className="finding" key={`${item.type}-${index}`}>
-            <div>
-              <strong>{item.type}</strong>
-              <p>{item.message}</p>
+        {(result.discrepancies ?? []).length === 0 ? (
+          <EmptyState detail="No existen discrepancias registradas." />
+        ) : (
+          result.discrepancies.map((item, index) => (
+            <div className="finding" key={`${item.type}-${index}`}>
+              <div>
+                <strong>{item.type || unavailable}</strong>
+                <p>{item.message || unavailable}</p>
+              </div>
+              <span>{item.severity || unavailable}</span>
             </div>
-            <span>{item.severity}</span>
-          </div>
-        ))}
+          ))
+        )}
       </div>
-      <div className="form-message info">{result.recommendation}</div>
+      <div className="form-message info">{result.recommendation || unavailable}</div>
     </section>
   );
 }
@@ -478,21 +626,18 @@ function AuditHistoryPreview({ history }) {
         <h2>Ultimas auditorias</h2>
       </div>
       {history.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin auditorias ejecutadas</strong>
-          <p>Cuando ejecutes una auditoria, el resultado aparecera aqui.</p>
-        </div>
+        <EmptyState detail="No existen auditorias previas." />
       ) : (
         <div className="cases-table">
           {history.slice(0, 5).map((item) => (
-            <Link className="case-row" to={`/dashboard/cases/${item.caseId}/result`} key={item.auditId}>
+            <Link className="case-row" to={`/dashboard/cases/${item.caseId}/result`} key={item.auditId ?? item.id}>
               <div className="case-copy">
-                <strong>{item.auditId}</strong>
-                <span>{item.caseId}</span>
+                <strong>{item.auditId ?? item.id ?? unavailable}</strong>
+                <span>{item.caseId ?? unavailable}</span>
               </div>
               <div className="case-amount">
-                <strong>{item.status}</strong>
-                <span>{item.createdAt ? new Date(item.createdAt).toLocaleString("es-EC") : "reciente"}</span>
+                <strong>{item.status ?? unavailable}</strong>
+                <span>{item.createdAt ? new Date(item.createdAt).toLocaleString("es-EC") : unavailable}</span>
               </div>
             </Link>
           ))}
@@ -500,4 +645,12 @@ function AuditHistoryPreview({ history }) {
       )}
     </section>
   );
+}
+
+function isAvailable(value) {
+  return value !== null && value !== undefined && value !== "";
+}
+
+function getCaseKey(auditCase) {
+  return auditCase?.id || auditCase?.claimNumber || "";
 }

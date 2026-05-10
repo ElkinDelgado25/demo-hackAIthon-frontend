@@ -1,5 +1,6 @@
 import { RefreshCcw, Trash2 } from "lucide-react";
-import { formatFileSize } from "../services/uploadsService";
+import { formatFileSize } from "../services/uploadService";
+import { EmptyState } from "./States";
 
 const dateFormatter = new Intl.DateTimeFormat("es-EC", {
   dateStyle: "medium",
@@ -9,12 +10,11 @@ const dateFormatter = new Intl.DateTimeFormat("es-EC", {
 export function UploadedFilesTable({ uploads, onDelete, onReplace }) {
   if (uploads.length === 0) {
     return (
-      <div className="empty-state">
-        <strong>No hay archivos cargados</strong>
-        <p>Sube factura, reporte y tarifario para preparar la auditoria automatica.</p>
-      </div>
+      <EmptyState detail="No existen documentos cargados para este caso." />
     );
   }
+
+  const canManageFiles = Boolean(onDelete || onReplace);
 
   return (
     <div className="table-wrap">
@@ -28,7 +28,7 @@ export function UploadedFilesTable({ uploads, onDelete, onReplace }) {
             <th>Tipo</th>
             <th>Fecha</th>
             <th>Estado</th>
-            <th>Acciones</th>
+            {canManageFiles ? <th>Acciones</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -37,26 +37,32 @@ export function UploadedFilesTable({ uploads, onDelete, onReplace }) {
               <td>{documentLabel(upload.documentType)}</td>
               <td>
                 <strong>{upload.name}</strong>
-                <span>Extraccion IA: {upload.extractionStatus}</span>
+                <span>Extraccion IA: {upload.extractionStatus || "Dato no disponible"}</span>
               </td>
-              <td>{upload.auditNumber}</td>
+              <td>{upload.auditNumber || "Dato no disponible"}</td>
               <td>{formatFileSize(upload.size)}</td>
-              <td>{upload.type}</td>
-              <td>{dateFormatter.format(new Date(upload.uploadedAt))}</td>
+              <td>{upload.type || "Dato no disponible"}</td>
+              <td>{upload.uploadedAt ? dateFormatter.format(new Date(upload.uploadedAt)) : "Dato no disponible"}</td>
               <td>
                 <span className={`file-status ${upload.status}`}>{upload.status}</span>
               </td>
-              <td>
-                <div className="row-actions">
-                  <label className="icon-button" title="Reemplazar archivo">
-                    <RefreshCcw size={16} />
-                    <input type="file" accept=".pdf,.csv,.xlsx,.json,.png,.jpg,.jpeg" onChange={(event) => onReplace(upload, event)} />
-                  </label>
-                  <button className="icon-button danger" type="button" onClick={() => onDelete(upload.id)} aria-label="Eliminar archivo">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </td>
+              {canManageFiles ? (
+                <td>
+                  <div className="row-actions">
+                    {onReplace ? (
+                      <label className="icon-button" title="Reemplazar archivo">
+                        <RefreshCcw size={16} />
+                        <input type="file" accept=".pdf,.csv,.xlsx,.json,.png,.jpg,.jpeg" onChange={(event) => onReplace(upload, event)} />
+                      </label>
+                    ) : null}
+                    {onDelete ? (
+                      <button className="icon-button danger" type="button" onClick={() => onDelete(upload.id)} aria-label="Eliminar archivo">
+                        <Trash2 size={16} />
+                      </button>
+                    ) : null}
+                  </div>
+                </td>
+              ) : null}
             </tr>
           ))}
         </tbody>
@@ -67,10 +73,11 @@ export function UploadedFilesTable({ uploads, onDelete, onReplace }) {
 
 function documentLabel(documentType) {
   const labels = {
-    factura: "Factura",
-    reporte: "Reporte",
-    tarifario: "Tarifario"
+    FACTURA: "Factura",
+    ORDEN_REPARACION: "Orden de reparacion",
+    DETALLE_MANO_OBRA: "Detalle mano de obra",
+    FOTOS_DANIO: "Fotos del dano"
   };
 
-  return labels[documentType] ?? documentType;
+  return labels[documentType] ?? documentType ?? "Dato no disponible";
 }

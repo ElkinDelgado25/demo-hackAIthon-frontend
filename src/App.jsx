@@ -33,6 +33,7 @@ function App() {
         <Route path="cases/:caseId" element={<CaseDetailPage />} />
         <Route path="cases/:caseId/upload" element={<UploadFilesPage />} />
         <Route path="cases/:caseId/result" element={<AuditResultPage />} />
+        <Route path="cases/:caseId/history" element={<AuditHistoryPage />} />
         <Route path="files" element={<UploadsPage />} />
         <Route path="rules" element={<RulesPage />} />
         <Route path="history" element={<AuditHistoryPage />} />

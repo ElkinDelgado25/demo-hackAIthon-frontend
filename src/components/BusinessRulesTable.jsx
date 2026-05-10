@@ -1,13 +1,9 @@
 import { Edit3, Power, Trash2 } from "lucide-react";
+import { EmptyState } from "./States";
 
 export function BusinessRulesTable({ rules, onEdit, onToggle, onDelete }) {
   if (rules.length === 0) {
-    return (
-      <div className="empty-state">
-        <strong>No hay reglas con esos filtros</strong>
-        <p>Ajusta la busqueda o crea una nueva regla para el motor de auditoria.</p>
-      </div>
-    );
+    return <EmptyState detail="No existen reglas configuradas." />;
   }
 
   return (
@@ -29,18 +25,18 @@ export function BusinessRulesTable({ rules, onEdit, onToggle, onDelete }) {
           {rules.map((rule) => (
             <tr key={rule.id}>
               <td>
-                <strong>{rule.name}</strong>
-                <span>{rule.alertMessage}</span>
+                <strong>{rule.name || "Dato no disponible"}</strong>
+                <span>{rule.alertMessage || "Dato no disponible"}</span>
               </td>
-              <td>{rule.type}</td>
-              <td>{rule.targetField}</td>
-              <td>{rule.operator}</td>
-              <td>{rule.referenceValue}</td>
+              <td>{rule.type || "Dato no disponible"}</td>
+              <td>{rule.targetField || "Dato no disponible"}</td>
+              <td>{rule.operator || "Dato no disponible"}</td>
+              <td>{rule.referenceValue || "Dato no disponible"}</td>
               <td>
-                <span className={`severity-pill ${rule.severity.toLowerCase()}`}>{rule.severity}</span>
+                <span className={`severity-pill ${rule.severity?.toLowerCase() ?? ""}`}>{rule.severity || "Dato no disponible"}</span>
               </td>
               <td>
-                <span className={`file-status ${rule.status.toLowerCase()}`}>{rule.status}</span>
+                <span className={`file-status ${rule.status?.toLowerCase() ?? ""}`}>{rule.status || "Dato no disponible"}</span>
               </td>
               <td>
                 <div className="row-actions">
