@@ -18,6 +18,12 @@ El backend debe encargarse de:
 El frontend solo necesita:
 
 ```bash
+VITE_API_BASE_URL=https://demo-hackaithon-backend.onrender.com/api
+```
+
+Para desarrollo local con FastAPI:
+
+```bash
 VITE_API_BASE_URL=http://localhost:8000/api
 ```
 

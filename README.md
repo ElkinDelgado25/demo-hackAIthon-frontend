@@ -15,7 +15,7 @@ npm run build
 Crea `.env.local` tomando como base `.env.example`.
 
 ```bash
-VITE_API_BASE_URL=http://localhost:8000/api
+VITE_API_BASE_URL=https://demo-hackaithon-backend.onrender.com/api
 ```
 
 El frontend consume solo datos reales desde el backend. Si la API falla, muestra un error controlado. Si la API responde vacio, muestra `Dato no disponible`.
@@ -107,15 +107,18 @@ Estadisticas:
 - Los archivos se envian con `multipart/form-data` a `POST /cases/{caseId}/documents`.
 - La auditoria se ejecuta con `POST /audit/{caseId}`.
 
-## PostgreSQL local
+## Backend desplegado
 
-La infraestructura SQL queda disponible para pruebas locales con Docker:
+El frontend debe consumir el backend publico en Render:
 
 ```bash
-docker compose up -d
+VITE_API_BASE_URL=https://demo-hackaithon-backend.onrender.com/api
 ```
 
-Los scripts iniciales se ejecutan automaticamente la primera vez que se crea el volumen:
+Endpoints de verificacion:
 
-- `database/init/01_schema.sql`
-- `database/init/02_seed.sql`
+- https://demo-hackaithon-backend.onrender.com/health
+- https://demo-hackaithon-backend.onrender.com/docs
+- https://demo-hackaithon-backend.onrender.com/api/openapi.json
+
+El frontend no debe conectarse directamente a MongoDB ni contener credenciales de base de datos. MongoDB vive exclusivamente en el backend.

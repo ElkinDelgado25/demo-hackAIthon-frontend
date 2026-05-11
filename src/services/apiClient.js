@@ -2,14 +2,10 @@ import { appConfig } from "../config/appConfig";
 
 export async function apiRequest(path, options = {}) {
   const isFormData = options.body instanceof FormData;
+  const headers = buildHeaders(options.headers, isFormData);
   const response = await fetch(`${appConfig.apiBaseUrl}${path}`, {
     ...options,
-    headers: isFormData
-      ? options.headers
-      : {
-          "Content-Type": "application/json",
-          ...options.headers
-        }
+    headers
   });
 
   if (!response.ok) {
@@ -28,6 +24,28 @@ export async function apiRequest(path, options = {}) {
   }
 
   return response.json();
+}
+
+function buildHeaders(customHeaders = {}, isFormData = false) {
+  const token = getAuthToken();
+  const headers = {
+    ...(!isFormData ? { "Content-Type": "application/json" } : {}),
+    ...customHeaders
+  };
+
+  if (token && !headers.Authorization) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
+function getAuthToken() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  return window.localStorage.getItem("accessToken") ?? window.localStorage.getItem("authToken") ?? "";
 }
 
 async function safeReadError(response) {

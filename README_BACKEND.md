@@ -4,6 +4,107 @@ Este documento especifica el backend necesario para conectar el frontend actual 
 
 No se crea backend en esta etapa. Este README funciona como documento maestro para construirlo posteriormente con FastAPI, MongoDB, Beanie ODM y autenticacion JWT.
 
+## 0. Diagnostico actual de conexion
+
+El problema principal no esta en una conexion directa del frontend con MongoDB. El frontend actual no se conecta a MongoDB ni deberia hacerlo. El frontend solo consume una API REST mediante `fetch`, usando la variable:
+
+```bash
+VITE_API_BASE_URL=https://demo-hackaithon-backend.onrender.com/api
+```
+
+En desarrollo local tambien puede usar:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8000/api
+```
+
+Por eso, si "no lee las APIs del backend", las causas mas probables son:
+
+- El backend no esta exponiendo las rutas exactamente bajo `/api`.
+- `VITE_API_BASE_URL` apunta a una URL distinta a donde realmente corre el backend.
+- El backend no tiene CORS habilitado para el origen del frontend.
+- El backend esta respondiendo nombres de campos distintos a los que normaliza el frontend.
+- El backend protege endpoints con JWT, pero el frontend actual todavia no envia `Authorization`.
+- El backend esta usando MongoDB, pero el repositorio frontend aun tiene restos de configuracion PostgreSQL en `.env.example` y `server/db/connection.js`; esos archivos no alimentan las llamadas reales del frontend.
+- El backend no responde errores en JSON con `detail` o `message`, por lo que el frontend solo muestra error generico.
+- La API desplegada en Render puede estar dormida, caida, sin variables MongoDB, o con una base de datos inaccesible desde el servicio.
+
+Conexion real que tiene hoy el frontend:
+
+```text
+React/Vite
+  -> import.meta.env.VITE_API_BASE_URL
+  -> src/config/appConfig.js
+  -> src/services/apiClient.js
+  -> fetch("{VITE_API_BASE_URL}{endpoint}")
+  -> Backend REST
+  -> MongoDB
+```
+
+El backend debe recibir las peticiones desde el frontend y ser el unico responsable de conectarse a MongoDB con `MONGODB_URI` y `MONGODB_DB`.
+
+### Aclaracion importante para el equipo backend
+
+Este repositorio es frontend. No debe contener la conexion real a MongoDB, credenciales de base de datos, modelos ODM ni logica de persistencia. La unica responsabilidad del frontend es llamar a una API HTTP.
+
+Por lo tanto, para integrar correctamente:
+
+- Backend debe implementar los endpoints listados en este documento.
+- Backend debe conectarse a MongoDB internamente.
+- Frontend solo debe recibir una URL publica o local en `VITE_API_BASE_URL`.
+- Si backend cambia el prefijo, por ejemplo de `/api` a `/api/v1`, debe avisar para actualizar `VITE_API_BASE_URL`.
+- Si backend exige JWT, debe avisar el contrato de login para agregar `Authorization: Bearer <token>` en `src/services/apiClient.js`.
+- Si backend cambia nombres de campos, debe mantener alias compatibles o avisar para ajustar los normalizadores del frontend.
+
+No pasar al frontend `MONGODB_URI`, usuario, password, string de conexion ni secretos. Esos valores pertenecen solamente al backend o al proveedor de despliegue.
+
+### Archivos de frontend que definen la integracion
+
+| Archivo | Funcion |
+| --- | --- |
+| `src/config/appConfig.js` | Lee `VITE_API_BASE_URL`. |
+| `src/config/database.js` | Declara todos los endpoints consumidos por el frontend. |
+| `src/services/apiClient.js` | Construye la URL final, agrega `Content-Type: application/json` y procesa errores. |
+| `src/services/caseService.js` | Consume casos y normaliza campos. |
+| `src/services/uploadService.js` | Consulta/sube documentos con `multipart/form-data`. |
+| `src/services/auditService.js` | Ejecuta auditorias y consulta resultados/historial. |
+| `src/services/businessRuleService.js` | CRUD de reglas de negocio. |
+| `src/services/statisticsService.js` | Metricas del dashboard. |
+
+### Contrato base obligatorio
+
+El backend debe garantizar esta forma general:
+
+```text
+Base URL frontend: VITE_API_BASE_URL
+Prefijo backend: /api
+Ejemplo final: https://demo-hackaithon-backend.onrender.com/api/cases
+```
+
+Si el backend expone `/cases` sin `/api`, el frontend no lo encontrara. Si el backend expone `/api/v1/cases`, el frontend tampoco lo encontrara salvo que `VITE_API_BASE_URL` sea `.../api/v1`.
+
+### CORS minimo recomendado
+
+En FastAPI, el backend deberia permitir al menos:
+
+```python
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:4173",
+        "https://demo-hackaithon-frontend.vercel.app",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+Cambiar el dominio de Vercel por el dominio real del frontend si es distinto.
+
 ## 1. Objetivo del backend
 
 El backend debe centralizar la operacion real del sistema de auditoria de facturacion de siniestros:
@@ -725,6 +826,36 @@ DEFAULT_ADMIN_PASSWORD=change-me
 
 No reutilizar las variables PostgreSQL presentes en `.env.example`; son restos de una preparacion anterior y no corresponden al stack solicitado con MongoDB.
 
+### Variables de entorno del frontend relacionadas
+
+El frontend solo necesita esta variable para llegar al backend:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8000/api
+```
+
+En el repositorio actual, `.env` apunta a:
+
+```bash
+VITE_API_BASE_URL=https://demo-hackaithon-backend.onrender.com/api
+```
+
+Si backend esta probando localmente en FastAPI, debe pedir que el frontend use `http://localhost:8000/api`. Si backend esta desplegado, debe validar que esa URL de Render responda y que tenga acceso a MongoDB.
+
+### Variables que NO debe usar el backend MongoDB
+
+Estas variables aparecen en `.env.example`, pero son para PostgreSQL y no corresponden al contrato actual con MongoDB:
+
+```bash
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=auditoria_siniestros
+DB_USER=postgres
+DB_PASSWORD=1234
+```
+
+Tambien existe `server/db/connection.js` con `pg`. Ese archivo es un residuo o prototipo local; el frontend React no lo usa para consultar datos. Para MongoDB, el backend debe usar `MONGODB_URI` y no `DB_HOST/DB_PORT`.
+
 ## 14. Flujo de integracion frontend-backend
 
 1. Backend corre en `http://localhost:8000`.
@@ -736,6 +867,28 @@ No reutilizar las variables PostgreSQL presentes en `.env.example`; son restos d
    - Listados como array directo o `{ "items": [] }`, aunque se recomienda usar nombres del dominio: `{ "cases": [] }`, `{ "documents": [] }`, `{ "rules": [] }`, `{ "history": [] }`.
    - Errores con `{ "detail": "mensaje" }`.
 7. Cuando se agregue login, frontend debe guardar token y enviarlo en `Authorization`.
+
+### Pruebas rapidas que backend debe ejecutar
+
+Antes de probar desde React, validar la API directamente:
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/api/cases
+curl http://localhost:8000/api/statistics/dashboard
+curl http://localhost:8000/api/business-rules
+```
+
+Para validar el despliegue actual configurado en el frontend:
+
+```bash
+curl https://demo-hackaithon-backend.onrender.com/health
+curl https://demo-hackaithon-backend.onrender.com/api/cases
+curl https://demo-hackaithon-backend.onrender.com/api/statistics/dashboard
+curl https://demo-hackaithon-backend.onrender.com/api/business-rules
+```
+
+Si estos comandos fallan, el problema esta en backend, despliegue, CORS/configuracion o MongoDB, no en las pantallas de React.
 
 ## 15. Reemplazo de mocks y constantes por datos reales
 
@@ -832,7 +985,7 @@ Codigos HTTP recomendados:
 - Usar logs estructurados con `request_id`.
 - Agregar healthchecks:
   - `GET /health`
-  - `GET /api/health/db`
+  - `GET /health`
 - Preparar OpenAPI con tags por modulo.
 - Cubrir con tests los flujos de documentos obligatorios, ejecucion de auditoria y CRUD de reglas.
 
@@ -856,3 +1009,4 @@ Para que el frontend actual funcione de extremo a extremo, la primera version de
 - `GET /api/statistics/denial-reasons`
 
 Con esas rutas, el frontend actual puede operar sin mocks, mostrar datos reales, cargar documentos, ejecutar auditorias, consultar resultados y administrar reglas de negocio.
+
