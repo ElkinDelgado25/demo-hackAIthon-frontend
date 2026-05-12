@@ -79,6 +79,18 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
     () => uploads.reduce((total, upload) => total + Number(upload.size ?? 0), 0),
     [uploads]
   );
+  const documentTypes = useMemo(
+    () => new Set([
+      ...uploads.map((upload) => upload.documentType),
+      ...selectedFiles.map((item) => item.documentType)
+    ]),
+    [selectedFiles, uploads]
+  );
+  const missingRequiredTypes = useMemo(
+    () => requiredDocumentTypes.filter((documentType) => !documentTypes.has(documentType)),
+    [documentTypes]
+  );
+  const isAuditReady = missingRequiredTypes.length === 0 && (uploads.length > 0 || selectedFiles.length > 0);
 
   const selectedFilesError = useMemo(() => {
     const typeError = selectedFiles.map((item) => validateAuditFile(item.file)).find(Boolean);
@@ -140,15 +152,16 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
     );
   }
 
-  function validateRequiredDocuments() {
-    const documentTypes = new Set([
-      ...uploads.map((upload) => upload.documentType),
-      ...selectedFiles.map((item) => item.documentType)
-    ]);
-    const missingTypes = requiredDocumentTypes.filter((documentType) => !documentTypes.has(documentType));
+  function handleChangeUploadedDocumentType(uploadId, documentType) {
+    setUploads((currentUploads) =>
+      currentUploads.map((upload) => (upload.id === uploadId ? { ...upload, documentType } : upload))
+    );
+    setMessage({ type: "success", text: "Tipo de documento actualizado para esta auditoria." });
+  }
 
-    if (missingTypes.length > 0) {
-      return `Faltan documentos obligatorios: ${missingTypes.join(", ")}.`;
+  function validateRequiredDocuments() {
+    if (missingRequiredTypes.length > 0) {
+      return `Faltan documentos obligatorios: ${missingRequiredTypes.join(", ")}.`;
     }
 
     return "";
@@ -267,6 +280,8 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
         <span>Seleccionado: {formatFileSize(selectedTotalBytes)}</span>
       </div>
 
+      <DocumentReadinessChecklist documentTypes={documentTypes} isAuditReady={isAuditReady} />
+
       {isLoadingDocuments ? <LoadingState message="Consultando documentos del caso..." /> : null}
       {documentsError ? <ErrorState message={documentsError} /> : null}
       {selectedFilesError ? <div className="form-message error">{selectedFilesError}</div> : null}
@@ -298,8 +313,29 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
         </div>
       ) : null}
 
-      <UploadedFilesTable uploads={uploads} />
+      <UploadedFilesTable
+        uploads={uploads}
+        documentOptions={documentOptions}
+        onChangeDocumentType={handleChangeUploadedDocumentType}
+      />
     </section>
+  );
+}
+
+function DocumentReadinessChecklist({ documentTypes, isAuditReady }) {
+  return (
+    <div className={`audit-checklist ${isAuditReady ? "ready" : ""}`} aria-label="Documentos obligatorios para auditar">
+      {requiredDocumentTypes.map((documentType) => {
+        const isComplete = documentTypes.has(documentType);
+
+        return (
+          <span className={isComplete ? "complete" : "missing"} key={documentType}>
+            {documentLabel(documentType)}: {isComplete ? "completo" : "pendiente"}
+          </span>
+        );
+      })}
+      <strong>{isAuditReady ? "Listo para auditar" : "Completa o reclasifica los documentos para auditar"}</strong>
+    </div>
   );
 }
 
@@ -339,4 +375,15 @@ function suggestDocumentType(fileName) {
   }
 
   return "FACTURA";
+}
+
+function documentLabel(documentType) {
+  const labels = {
+    FACTURA: "Factura",
+    ORDEN_REPARACION: "Orden de reparacion",
+    DETALLE_MANO_OBRA: "Detalle mano de obra",
+    FOTOS_DANIO: "Fotos del dano"
+  };
+
+  return labels[documentType] ?? documentType;
 }

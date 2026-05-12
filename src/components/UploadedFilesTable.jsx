@@ -7,7 +7,7 @@ const dateFormatter = new Intl.DateTimeFormat("es-EC", {
   timeStyle: "short"
 });
 
-export function UploadedFilesTable({ uploads, onDelete, onReplace }) {
+export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocumentType, onDelete, onReplace }) {
   if (uploads.length === 0) {
     return (
       <EmptyState detail="No existen documentos cargados para este caso." />
@@ -15,6 +15,7 @@ export function UploadedFilesTable({ uploads, onDelete, onReplace }) {
   }
 
   const canManageFiles = Boolean(onDelete || onReplace);
+  const canEditDocumentType = Boolean(onChangeDocumentType && documentOptions.length);
 
   return (
     <div className="table-wrap">
@@ -34,7 +35,24 @@ export function UploadedFilesTable({ uploads, onDelete, onReplace }) {
         <tbody>
           {uploads.map((upload) => (
             <tr key={upload.id}>
-              <td>{documentLabel(upload.documentType)}</td>
+              <td>
+                {canEditDocumentType ? (
+                  <select
+                    className="inline-select"
+                    value={upload.documentType}
+                    onChange={(event) => onChangeDocumentType(upload.id, event.target.value)}
+                    aria-label={`Tipo de documento para ${upload.name}`}
+                  >
+                    {documentOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  documentLabel(upload.documentType)
+                )}
+              </td>
               <td>
                 <strong>{upload.name}</strong>
                 <span>Extraccion IA: {upload.extractionStatus || "Dato no disponible"}</span>
