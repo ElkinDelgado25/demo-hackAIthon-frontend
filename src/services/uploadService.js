@@ -1,15 +1,24 @@
 import { apiEndpoints } from "../config/database";
 import { apiRequest } from "./apiClient";
 
-export const allowedUploadExtensions = ["pdf", "csv", "xlsx", "json", "png", "jpg", "jpeg"];
+export const allowedUploadExtensions = ["pdf", "csv", "xlsx", "json", "png", "jpg", "jpeg", "txt"];
 export const requiredDocumentTypes = ["FACTURA", "ORDEN_REPARACION", "DETALLE_MANO_OBRA", "FOTOS_DANIO"];
+export const documentTypeOptions = [
+  { value: "FACTURA", label: "Factura" },
+  { value: "ORDEN_REPARACION", label: "Orden de reparacion" },
+  { value: "DETALLE_MANO_OBRA", label: "Detalle mano de obra" },
+  { value: "FOTOS_DANIO", label: "Fotos del dano" },
+  { value: "TARIFARIO", label: "Tarifario" },
+  { value: "POLIZA", label: "Poliza" },
+  { value: "SUSTENTO_ADICIONAL", label: "Sustento adicional" }
+];
 export const maxUploadSizeBytes = 20 * 1024 * 1024;
 
 export function validateAuditFile(file) {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
 
   if (!allowedUploadExtensions.includes(extension)) {
-    return "Tipo no permitido. Usa PDF, CSV, XLSX, JSON, PNG o JPG.";
+    return "Tipo no permitido. Usa PDF, CSV, XLSX, JSON, PNG, JPG, JPEG o TXT.";
   }
 
   if (file.size > maxUploadSizeBytes) {

@@ -1,11 +1,11 @@
 import { AlertTriangle, CheckCircle2, FileSearch, Filter, Search } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { BusinessRulesDashboard } from "../components/BusinessRulesDashboard";
 import { FileUploadSection } from "../components/FileUploadSection";
 import { DenialReasonsCard, EmptyState, ErrorState, LoadingState, StatCard } from "../components/States";
 import { fetchCaseById, fetchCases } from "../services/caseService";
-import { getAuditHistory, getLatestAudit } from "../services/auditService";
+import { generateFinalVerdict, getAuditHistory, getLatestAudit, runAudit } from "../services/auditService";
 import { fetchDashboardStatistics, fetchDenialReasons } from "../services/statisticsService";
 
 const statusCopy = {
@@ -224,12 +224,13 @@ export function CasesPage() {
       {selectedCase ? <CaseDetail selectedCase={selectedCase} compact /> : null}
       {selectedCase ? (
         <div className="page-actions">
-          <Link className="primary-action" to={`/dashboard/cases/${selectedCase.claimNumber}/upload`}>
+          <Link className="primary-action" to={`/dashboard/cases/${getCaseKey(selectedCase)}/upload`}>
             Subir documentos
           </Link>
-          <Link className="secondary-action" to={`/dashboard/cases/${selectedCase.claimNumber}`}>
+          <Link className="secondary-action" to={`/dashboard/cases/${getCaseKey(selectedCase)}`}>
             Ver detalle
           </Link>
+          <ManualAuditButton caseId={getCaseKey(selectedCase)} />
         </div>
       ) : null}
     </>
@@ -298,12 +299,13 @@ export function CaseDetailPage() {
       <PageHeader eyebrow="Detalle" title={auditCase.claimNumber || unavailable} />
       <CaseDetail selectedCase={auditCase} />
       <div className="page-actions">
-        <Link className="primary-action" to={`/dashboard/cases/${auditCase.claimNumber}/upload`}>
+        <Link className="primary-action" to={`/dashboard/cases/${getCaseKey(auditCase)}/upload`}>
           Subir documentos
         </Link>
         <Link className="secondary-action" to="/dashboard/cases">
           Volver a casos
         </Link>
+        <ManualAuditButton caseId={getCaseKey(auditCase)} />
       </div>
     </>
   );
@@ -356,7 +358,7 @@ export function UploadFilesPage() {
     <>
       <PageHeader eyebrow="Subida" title={`Documentos para ${auditCase.claimNumber || unavailable}`} />
       <CaseDetail selectedCase={auditCase} compact />
-      <FileUploadSection defaultAuditNumber={auditCase.claimNumber} auditCase={auditCase} />
+      <FileUploadSection defaultAuditNumber={getCaseKey(auditCase)} auditCase={auditCase} />
     </>
   );
 }
@@ -367,6 +369,8 @@ export function AuditResultPage() {
   const [result, setResult] = useState(location.state?.result ?? null);
   const [isLoading, setIsLoading] = useState(!location.state?.result);
   const [error, setError] = useState("");
+  const [isGeneratingVerdict, setIsGeneratingVerdict] = useState(false);
+  const [verdictError, setVerdictError] = useState("");
 
   useEffect(() => {
     if (result) {
@@ -397,17 +401,76 @@ export function AuditResultPage() {
     };
   }, [caseId, result]);
 
+  async function handleGenerateFinalVerdict() {
+    setIsGeneratingVerdict(true);
+    setVerdictError("");
+
+    try {
+      const verdictResult = await generateFinalVerdict(caseId);
+      setResult((currentResult) => ({ ...(currentResult ?? {}), ...(verdictResult ?? {}) }));
+    } catch (requestError) {
+      setVerdictError(requestError.message || "No se pudo ejecutar la auditoria. Revisa logs del backend.");
+    } finally {
+      setIsGeneratingVerdict(false);
+    }
+  }
+
   return (
     <>
       <PageHeader eyebrow="Resultado" title={`Resultado de auditoria ${caseId}`} />
       {isLoading ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
+      {verdictError ? <ErrorState message={verdictError} /> : null}
       {!isLoading && !error && result ? (
-        <AuditResultCard result={result} />
+        <>
+          <div className="page-actions">
+            <button className="primary-action" type="button" onClick={handleGenerateFinalVerdict} disabled={isGeneratingVerdict}>
+              {isGeneratingVerdict ? "Generando veredicto final" : "Generar veredicto final"}
+            </button>
+          </div>
+          <AuditResultCard result={result} />
+        </>
       ) : null}
       {!isLoading && !error && !result ? (
         <EmptyState detail="Este caso aun no tiene auditoria registrada." />
       ) : null}
+    </>
+  );
+}
+
+function ManualAuditButton({ caseId }) {
+  const navigate = useNavigate();
+  const [isRunning, setIsRunning] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleRunAudit() {
+    if (!caseId) {
+      setError("Dato no disponible");
+      return;
+    }
+
+    setIsRunning(true);
+    setError("");
+
+    try {
+      const result = await runAudit(caseId, {
+        caseId,
+        source: "frontend-manual"
+      });
+      navigate(`/dashboard/cases/${caseId}/result`, { state: { result } });
+    } catch (requestError) {
+      setError(requestError.message || "No se pudo ejecutar la auditoria. Revisa logs del backend.");
+    } finally {
+      setIsRunning(false);
+    }
+  }
+
+  return (
+    <>
+      <button className="primary-action" type="button" onClick={handleRunAudit} disabled={isRunning}>
+        {isRunning ? "Ejecutando auditoria" : "Ejecutar auditoria"}
+      </button>
+      {error ? <div className="form-message error">{error}</div> : null}
     </>
   );
 }
@@ -574,11 +637,16 @@ function CaseRow({ auditCase, active, onSelectCase }) {
 }
 
 function AuditResultCard({ result }) {
+  const findings = result.findings ?? [];
+  const discrepancies = result.discrepancies ?? [];
+  const topReasons = result.topReasons ?? [];
+  const documents = result.documents ?? [];
+
   return (
     <section className="route-panel">
       <div className="detail-header">
         <div>
-          <span className={`status-pill ${result.status === "APROBADO" ? "bajo" : "alto"}`}>{result.status || unavailable}</span>
+          <span className={`status-pill ${auditStatusClass(result.status)}`}>{result.status || unavailable}</span>
           <h2>{result.auditId || unavailable}</h2>
           <p>{result.summary || unavailable}</p>
         </div>
@@ -587,25 +655,115 @@ function AuditResultCard({ result }) {
           <span>confianza</span>
         </div>
       </div>
+
+      <div className="result-metrics">
+        <StatCard label="Riesgo" value={isAvailable(result.riskScore) ? result.riskScore : null} />
+        <StatCard label="Factura" value={isAvailable(result.invoiceTotal) ? currency.format(result.invoiceTotal) : null} />
+        <StatCard label="Esperado" value={isAvailable(result.expectedTotal) ? currency.format(result.expectedTotal) : null} />
+        <StatCard label="Diferencia" value={isAvailable(result.difference) ? currency.format(result.difference) : null} />
+      </div>
+
+      <ResultSection title="Veredicto final">
+        <div className="form-message info">{result.finalVerdict || unavailable}</div>
+      </ResultSection>
+
+      <ResultSection title="Hallazgos">
+        {findings.length === 0 ? (
+          <EmptyState detail="No existen hallazgos registrados." />
+        ) : (
+          findings.map((item, index) => (
+            <div className="finding" key={`${item.type ?? item.title ?? "finding"}-${index}`}>
+              <div>
+                <strong>{item.title || item.type || unavailable}</strong>
+                <p>{item.message || item.detail || unavailable}</p>
+              </div>
+              <span>{item.severity || item.impact || unavailable}</span>
+            </div>
+          ))
+        )}
+      </ResultSection>
+
       <div className="findings">
         <h3>Discrepancias</h3>
-        {(result.discrepancies ?? []).length === 0 ? (
+        {discrepancies.length === 0 ? (
           <EmptyState detail="No existen discrepancias registradas." />
         ) : (
-          result.discrepancies.map((item, index) => (
+          discrepancies.map((item, index) => (
             <div className="finding" key={`${item.type}-${index}`}>
               <div>
                 <strong>{item.type || unavailable}</strong>
                 <p>{item.message || unavailable}</p>
+                <p>
+                  Esperado: {valueOrUnavailable(item.expected)} | Encontrado: {valueOrUnavailable(item.found)}
+                  {item.documentType ? ` | Documento: ${item.documentType}` : ""}
+                </p>
               </div>
-              <span>{item.severity || unavailable}</span>
+              <span>{item.difference ?? item.severity ?? unavailable}</span>
             </div>
           ))
         )}
       </div>
+
+      <ResultSection title="Razones principales">
+        {topReasons.length === 0 ? (
+          <EmptyState detail="No existen razones principales registradas." />
+        ) : (
+          topReasons.map((item, index) => (
+            <div className="finding" key={`${item.reason ?? item.type ?? "reason"}-${index}`}>
+              <div>
+                <strong>{item.reason || item.type || unavailable}</strong>
+                <p>{item.message || item.detail || unavailable}</p>
+              </div>
+              <span>{item.percentage ? `${item.percentage}%` : item.count ?? unavailable}</span>
+            </div>
+          ))
+        )}
+      </ResultSection>
+
+      <ResultSection title="Documentos analizados">
+        {documents.length === 0 ? (
+          <EmptyState detail="No existen documentos asociados al resultado." />
+        ) : (
+          documents.map((document, index) => (
+            <div className="finding" key={`${document.name ?? document.originalName ?? "document"}-${index}`}>
+              <div>
+                <strong>{document.documentType || document.type || unavailable}</strong>
+                <p>{document.originalName || document.name || unavailable}</p>
+              </div>
+              <span>{document.parseStatus || document.status || unavailable}</span>
+            </div>
+          ))
+        )}
+      </ResultSection>
+
       <div className="form-message info">{result.recommendation || unavailable}</div>
     </section>
   );
+}
+
+function ResultSection({ title, children }) {
+  return (
+    <div className="findings">
+      <h3>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function auditStatusClass(status) {
+  if (status === "APROBADO") {
+    return "bajo";
+  }
+
+  if (status === "REVISION_HUMANA") {
+    return "medio";
+  }
+
+  return "alto";
+}
+
+function valueOrUnavailable(value) {
+  return isAvailable(value) ? value : unavailable;
 }
 
 function AuditHistoryPreview({ history }) {

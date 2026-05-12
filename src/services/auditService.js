@@ -20,3 +20,17 @@ export async function getAuditHistory(caseId) {
   const data = await apiRequest(apiEndpoints.auditHistory(caseId));
   return Array.isArray(data) ? data : data?.audits ?? data?.history ?? [];
 }
+
+export async function generateFinalVerdict(caseId) {
+  return apiRequest(apiEndpoints.auditFinalVerdict(caseId), {
+    method: "POST",
+    body: JSON.stringify({ caseId, source: "frontend-final-verdict" })
+  });
+}
+
+export async function runBatchAudit(caseIds) {
+  return apiRequest(apiEndpoints.auditBatch, {
+    method: "POST",
+    body: JSON.stringify({ caseIds })
+  });
+}

@@ -12,6 +12,8 @@ export const apiEndpoints = {
   auditRun: (caseId) => `/audit/${caseId}`,
   auditLatest: (caseId) => `/audit/${caseId}/latest`,
   auditHistory: (caseId) => `/audit/${caseId}/history`,
+  auditFinalVerdict: (caseId) => `/audit/${caseId}/final-verdict`,
+  auditBatch: "/audit/batch",
   businessRules: "/business-rules",
   businessRuleById: (ruleId) => `/business-rules/${ruleId}`,
   businessRuleToggle: (ruleId) => `/business-rules/${ruleId}/toggle`,

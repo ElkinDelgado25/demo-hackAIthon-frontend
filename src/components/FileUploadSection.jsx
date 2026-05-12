@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { runAudit } from "../services/auditService";
 import {
   allowedUploadExtensions,
+  documentTypeOptions,
   formatFileSize,
   getDocuments,
   maxUploadSizeBytes,
@@ -15,12 +16,7 @@ import {
 import { ErrorState, LoadingState } from "./States";
 import { UploadedFilesTable } from "./UploadedFilesTable";
 
-const documentOptions = [
-  { value: "FACTURA", label: "Factura" },
-  { value: "ORDEN_REPARACION", label: "Orden de reparacion" },
-  { value: "DETALLE_MANO_OBRA", label: "Detalle mano de obra" },
-  { value: "FOTOS_DANIO", label: "Fotos del dano" }
-];
+const documentOptions = documentTypeOptions;
 
 export function FileUploadSection({ defaultAuditNumber, auditCase }) {
   const navigate = useNavigate();
@@ -217,12 +213,13 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
     try {
       const uploadResponse = selectedFiles.length ? await uploadDocuments(auditNumber.trim(), selectedFiles) : null;
       const uploadedDocuments = normalizeDocumentsResponse(uploadResponse);
-      const documents = uploadedDocuments.length ? uploadedDocuments : uploads;
+      const selectedDocuments = uploadedDocuments.length ? uploadedDocuments : selectedFiles.map((item) => createSelectedDocument(item, auditNumber.trim()));
+      const documents = mergeDocuments(uploads, selectedDocuments);
       const payload = buildAuditPayload(documents);
       const result = await runAudit(auditNumber.trim(), payload);
 
-      if (uploadedDocuments.length) {
-        setUploads(uploadedDocuments);
+      if (selectedDocuments.length) {
+        setUploads(documents);
       }
       setSelectedFiles([]);
       if (fileInputRef.current) {
@@ -262,7 +259,7 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".pdf,.csv,.xlsx,.json,.png,.jpg,.jpeg"
+            accept=".pdf,.csv,.xlsx,.json,.png,.jpg,.jpeg,.txt"
             onChange={handleSelectFiles}
           />
         </label>
@@ -344,25 +341,58 @@ function normalizeDocumentsResponse(response) {
   return documents.map(normalizeDocument);
 }
 
+function mergeDocuments(currentDocuments, nextDocuments) {
+  const documentsByKey = new Map();
+
+  [...currentDocuments, ...nextDocuments].forEach((document) => {
+    documentsByKey.set(document.id ?? `${document.name}-${document.documentType}`, document);
+  });
+
+  return Array.from(documentsByKey.values());
+}
+
+function createSelectedDocument(item, auditNumber) {
+  return {
+    id: `${item.file.name}-${item.documentType}-${item.file.lastModified}`,
+    auditNumber,
+    documentType: item.documentType,
+    name: item.file.name,
+    size: item.file.size,
+    type: item.file.name.split(".").pop()?.toUpperCase() ?? item.file.type,
+    mimeType: item.file.type || "application/octet-stream",
+    uploadedAt: new Date().toISOString(),
+    status: "cargado",
+    extractionStatus: "pendiente",
+    parseStatus: "pendiente",
+    parseError: ""
+  };
+}
+
 function normalizeDocument(document) {
   return {
     id: document.id ?? document.documentId ?? document.name,
     auditNumber: document.auditNumber ?? document.caseId ?? document.case_id ?? "",
-    documentType: document.documentType ?? document.type ?? document.document_type ?? "",
-    name: document.name ?? document.filename ?? document.fileName ?? "Dato no disponible",
+    documentType: document.documentType ?? document.document_type ?? document.type ?? "",
+    name: document.originalName ?? document.name ?? document.filename ?? document.fileName ?? "Dato no disponible",
     size: Number(document.size ?? 0),
-    type: document.fileType ?? document.extension ?? document.mimeType ?? document.mime_type ?? "",
+    type: document.extension ?? document.fileType ?? document.mimeType ?? document.mime_type ?? "",
     mimeType: document.mimeType ?? document.mime_type ?? "",
     uploadedAt: document.uploadedAt ?? document.createdAt ?? document.created_at ?? "",
     status: document.status ?? "cargado",
-    extractionStatus: document.extractionStatus ?? document.extraction_status ?? "Dato no disponible"
+    extractionStatus: document.parseStatus ?? document.extractionStatus ?? document.extraction_status ?? "Dato no disponible",
+    parseStatus: document.parseStatus ?? document.extractionStatus ?? document.extraction_status ?? "",
+    parseError: document.parseError ?? document.parse_error ?? ""
   };
 }
 
 function suggestDocumentType(fileName) {
   const normalizedName = fileName.toLowerCase();
 
-  if (normalizedName.includes("orden")) {
+  if (normalizedName.includes("factura")) {
+    return "FACTURA";
+  }
+
+  if (normalizedName.includes("orden") || normalizedName.includes("reparacion")) {
     return "ORDEN_REPARACION";
   }
 
@@ -370,8 +400,29 @@ function suggestDocumentType(fileName) {
     return "DETALLE_MANO_OBRA";
   }
 
-  if (normalizedName.includes("foto") || normalizedName.endsWith(".png") || normalizedName.endsWith(".jpg") || normalizedName.endsWith(".jpeg")) {
+  if (
+    normalizedName.includes("foto") ||
+    normalizedName.includes("fotos") ||
+    normalizedName.includes("danio") ||
+    normalizedName.includes("daño") ||
+    normalizedName.includes("dano") ||
+    normalizedName.endsWith(".png") ||
+    normalizedName.endsWith(".jpg") ||
+    normalizedName.endsWith(".jpeg")
+  ) {
     return "FOTOS_DANIO";
+  }
+
+  if (normalizedName.includes("tarifario")) {
+    return "TARIFARIO";
+  }
+
+  if (normalizedName.includes("poliza") || normalizedName.includes("póliza")) {
+    return "POLIZA";
+  }
+
+  if (normalizedName.includes("sustento") || normalizedName.includes("adicional")) {
+    return "SUSTENTO_ADICIONAL";
   }
 
   return "FACTURA";
@@ -382,7 +433,10 @@ function documentLabel(documentType) {
     FACTURA: "Factura",
     ORDEN_REPARACION: "Orden de reparacion",
     DETALLE_MANO_OBRA: "Detalle mano de obra",
-    FOTOS_DANIO: "Fotos del dano"
+    FOTOS_DANIO: "Fotos del dano",
+    TARIFARIO: "Tarifario",
+    POLIZA: "Poliza",
+    SUSTENTO_ADICIONAL: "Sustento adicional"
   };
 
   return labels[documentType] ?? documentType;

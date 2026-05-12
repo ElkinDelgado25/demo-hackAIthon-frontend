@@ -55,7 +55,8 @@ export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocu
               </td>
               <td>
                 <strong>{upload.name}</strong>
-                <span>Extraccion IA: {upload.extractionStatus || "Dato no disponible"}</span>
+                <span>Parseo: {upload.parseStatus || upload.extractionStatus || "Dato no disponible"}</span>
+                {upload.parseError ? <span>Error: {upload.parseError}</span> : null}
               </td>
               <td>{upload.auditNumber || "Dato no disponible"}</td>
               <td>{formatFileSize(upload.size)}</td>
@@ -70,7 +71,7 @@ export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocu
                     {onReplace ? (
                       <label className="icon-button" title="Reemplazar archivo">
                         <RefreshCcw size={16} />
-                        <input type="file" accept=".pdf,.csv,.xlsx,.json,.png,.jpg,.jpeg" onChange={(event) => onReplace(upload, event)} />
+                        <input type="file" accept=".pdf,.csv,.xlsx,.json,.png,.jpg,.jpeg,.txt" onChange={(event) => onReplace(upload, event)} />
                       </label>
                     ) : null}
                     {onDelete ? (
@@ -94,7 +95,10 @@ function documentLabel(documentType) {
     FACTURA: "Factura",
     ORDEN_REPARACION: "Orden de reparacion",
     DETALLE_MANO_OBRA: "Detalle mano de obra",
-    FOTOS_DANIO: "Fotos del dano"
+    FOTOS_DANIO: "Fotos del dano",
+    TARIFARIO: "Tarifario",
+    POLIZA: "Poliza",
+    SUSTENTO_ADICIONAL: "Sustento adicional"
   };
 
   return labels[documentType] ?? documentType ?? "Dato no disponible";

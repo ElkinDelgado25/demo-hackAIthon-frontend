@@ -10,6 +10,9 @@ export async function apiRequest(path, options = {}) {
 
   if (!response.ok) {
     const errorBody = await safeReadError(response);
+    if (response.status >= 500) {
+      throw new Error(errorBody || "No se pudo ejecutar la auditoria. Revisa logs del backend.");
+    }
     throw new Error(errorBody || `No se pudo consultar la informacion. Estado HTTP ${response.status}.`);
   }
 
