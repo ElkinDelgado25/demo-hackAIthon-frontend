@@ -21,6 +21,11 @@ export async function getAuditHistory(caseId) {
   return Array.isArray(data) ? data : data?.audits ?? data?.history ?? [];
 }
 
+export async function getAllAuditHistory() {
+  const data = await apiRequest(apiEndpoints.auditHistoryAll);
+  return Array.isArray(data) ? data : data?.audits ?? data?.history ?? [];
+}
+
 export async function generateFinalVerdict(caseId) {
   return apiRequest(apiEndpoints.auditFinalVerdict(caseId), {
     method: "POST",

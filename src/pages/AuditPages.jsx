@@ -4,9 +4,11 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from "reac
 import { BusinessRulesDashboard } from "../components/BusinessRulesDashboard";
 import { FileUploadSection } from "../components/FileUploadSection";
 import { DenialReasonsCard, EmptyState, ErrorState, LoadingState, StatCard } from "../components/States";
+import { UploadedFilesTable } from "../components/UploadedFilesTable";
 import { fetchCaseById, fetchCases } from "../services/caseService";
-import { generateFinalVerdict, getAuditHistory, getLatestAudit, runAudit } from "../services/auditService";
+import { generateFinalVerdict, getAllAuditHistory, getAuditHistory, getLatestAudit, runAudit } from "../services/auditService";
 import { fetchDashboardStatistics, fetchDenialReasons } from "../services/statisticsService";
+import { getAllDocuments } from "../services/uploadService";
 
 const statusCopy = {
   alto: "Riesgo alto",
@@ -238,10 +240,41 @@ export function CasesPage() {
 }
 
 export function UploadsPage() {
+  const [documents, setDocuments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getAllDocuments()
+      .then((data) => {
+        if (isMounted) {
+          setDocuments(data);
+        }
+      })
+      .catch((requestError) => {
+        if (isMounted) {
+          setError(requestError.message || "No se pudo consultar la informacion. Verifique la conexion con el backend.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <>
       <PageHeader eyebrow="Archivos" title="Gestion de documentos para auditoria" />
-      <EmptyState detail="Selecciona un caso desde la bandeja para cargar documentos reales." />
+      {isLoading ? <LoadingState /> : null}
+      {error ? <ErrorState message={error} /> : null}
+      {!isLoading && !error ? <UploadedFilesTable uploads={documents} /> : null}
       <div className="page-actions">
         <Link className="primary-action" to="/dashboard/cases">
           Ir a casos
@@ -480,17 +513,17 @@ export function AuditHistoryPage() {
   const [searchParams] = useSearchParams();
   const caseId = params.caseId ?? searchParams.get("caseId");
   const [history, setHistory] = useState([]);
-  const [isLoading, setIsLoading] = useState(Boolean(caseId));
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!caseId) {
-      return;
-    }
-
     let isMounted = true;
+    const historyRequest = caseId ? getAuditHistory(caseId) : getAllAuditHistory();
 
-    getAuditHistory(caseId)
+    setIsLoading(true);
+    setError("");
+
+    historyRequest
       .then((data) => {
         if (isMounted) {
           setHistory(data);
@@ -515,10 +548,9 @@ export function AuditHistoryPage() {
   return (
     <>
       <PageHeader eyebrow="Historial" title="Ultimas auditorias ejecutadas" />
-      {!caseId ? <EmptyState detail="No existen auditorias previas." /> : null}
       {isLoading ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
-      {caseId && !isLoading && !error ? <AuditHistoryPreview history={history} /> : null}
+      {!isLoading && !error ? <AuditHistoryPreview history={history} /> : null}
     </>
   );
 }

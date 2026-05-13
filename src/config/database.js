@@ -8,9 +8,11 @@ export const databaseConfig = {
 export const apiEndpoints = {
   cases: "/cases",
   caseById: (id) => `/cases/${id}`,
+  allDocuments: "/cases/documents",
   caseDocuments: (caseId) => `/cases/${caseId}/documents`,
   auditRun: (caseId) => `/audit/${caseId}`,
   auditLatest: (caseId) => `/audit/${caseId}/latest`,
+  auditHistoryAll: "/audit/history",
   auditHistory: (caseId) => `/audit/${caseId}/history`,
   auditFinalVerdict: (caseId) => `/audit/${caseId}/final-verdict`,
   auditBatch: "/audit/batch",

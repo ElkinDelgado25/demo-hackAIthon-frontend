@@ -10,7 +10,7 @@ const dateFormatter = new Intl.DateTimeFormat("es-EC", {
 export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocumentType, onDelete, onReplace }) {
   if (uploads.length === 0) {
     return (
-      <EmptyState detail="No existen documentos cargados para este caso." />
+      <EmptyState message="No hay documentos cargados" detail="Dato no disponible" />
     );
   }
 

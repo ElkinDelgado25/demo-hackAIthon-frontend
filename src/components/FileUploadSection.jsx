@@ -8,6 +8,7 @@ import {
   formatFileSize,
   getDocuments,
   maxUploadSizeBytes,
+  normalizeDocumentsResponse,
   requiredDocumentTypes,
   uploadDocuments,
   validateAuditFile,
@@ -48,7 +49,7 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
     getDocuments(normalizedAuditNumber)
       .then((documents) => {
         if (isMounted) {
-          setUploads(documents.map(normalizeDocument));
+          setUploads(documents);
         }
       })
       .catch(() => {
@@ -336,11 +337,6 @@ function DocumentReadinessChecklist({ documentTypes, isAuditReady }) {
   );
 }
 
-function normalizeDocumentsResponse(response) {
-  const documents = Array.isArray(response) ? response : response?.documents ?? response?.items ?? [];
-  return documents.map(normalizeDocument);
-}
-
 function mergeDocuments(currentDocuments, nextDocuments) {
   const documentsByKey = new Map();
 
@@ -365,23 +361,6 @@ function createSelectedDocument(item, auditNumber) {
     extractionStatus: "pendiente",
     parseStatus: "pendiente",
     parseError: ""
-  };
-}
-
-function normalizeDocument(document) {
-  return {
-    id: document.id ?? document.documentId ?? document.name,
-    auditNumber: document.auditNumber ?? document.caseId ?? document.case_id ?? "",
-    documentType: document.documentType ?? document.document_type ?? document.type ?? "",
-    name: document.originalName ?? document.name ?? document.filename ?? document.fileName ?? "Dato no disponible",
-    size: Number(document.size ?? 0),
-    type: document.extension ?? document.fileType ?? document.mimeType ?? document.mime_type ?? "",
-    mimeType: document.mimeType ?? document.mime_type ?? "",
-    uploadedAt: document.uploadedAt ?? document.createdAt ?? document.created_at ?? "",
-    status: document.status ?? "cargado",
-    extractionStatus: document.parseStatus ?? document.extractionStatus ?? document.extraction_status ?? "Dato no disponible",
-    parseStatus: document.parseStatus ?? document.extractionStatus ?? document.extraction_status ?? "",
-    parseError: document.parseError ?? document.parse_error ?? ""
   };
 }
 

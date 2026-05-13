@@ -57,7 +57,12 @@ export async function getDocuments(caseId) {
   }
 
   const data = await apiRequest(apiEndpoints.caseDocuments(caseId));
-  return Array.isArray(data) ? data : data?.documents ?? data?.items ?? [];
+  return normalizeDocumentsResponse(data);
+}
+
+export async function getAllDocuments() {
+  const data = await apiRequest(apiEndpoints.allDocuments);
+  return normalizeDocumentsResponse(data);
 }
 
 export async function uploadDocuments(caseId, files) {
@@ -78,4 +83,26 @@ export async function uploadDocuments(caseId, files) {
     method: "POST",
     body: formData
   });
+}
+
+export function normalizeDocumentsResponse(response) {
+  const documents = Array.isArray(response) ? response : response?.documents ?? response?.items ?? [];
+  return documents.map(normalizeDocument);
+}
+
+export function normalizeDocument(document) {
+  return {
+    id: document.id ?? document.documentId ?? document.name,
+    auditNumber: document.auditNumber ?? document.caseId ?? document.case_id ?? "",
+    documentType: document.documentType ?? document.document_type ?? document.type ?? "",
+    name: document.originalName ?? document.name ?? document.filename ?? document.fileName ?? "Dato no disponible",
+    size: Number(document.size ?? 0),
+    type: document.extension ?? document.fileType ?? document.mimeType ?? document.mime_type ?? "",
+    mimeType: document.mimeType ?? document.mime_type ?? "",
+    uploadedAt: document.uploadedAt ?? document.createdAt ?? document.created_at ?? "",
+    status: document.status ?? "cargado",
+    extractionStatus: document.parseStatus ?? document.extractionStatus ?? document.extraction_status ?? "Dato no disponible",
+    parseStatus: document.parseStatus ?? document.extractionStatus ?? document.extraction_status ?? "",
+    parseError: document.parseError ?? document.parse_error ?? ""
+  };
 }
