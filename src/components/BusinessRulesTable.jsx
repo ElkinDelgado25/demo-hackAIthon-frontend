@@ -1,9 +1,10 @@
 import { Edit3, Power, Trash2 } from "lucide-react";
+import { formatBusinessRuleLabel } from "../data/businessRules";
 import { EmptyState } from "./States";
 
 export function BusinessRulesTable({ rules, onEdit, onToggle, onDelete }) {
   if (rules.length === 0) {
-    return <EmptyState detail="No existen reglas configuradas." />;
+    return <EmptyState detail="No configured rules found." />;
   }
 
   return (
@@ -11,42 +12,42 @@ export function BusinessRulesTable({ rules, onEdit, onToggle, onDelete }) {
       <table className="data-table">
         <thead>
           <tr>
-            <th>Regla</th>
-            <th>Tipo</th>
-            <th>Campo</th>
-            <th>Operador</th>
-            <th>Referencia</th>
-            <th>Severidad</th>
-            <th>Estado</th>
-            <th>Acciones</th>
+            <th>Rule</th>
+            <th>Type</th>
+            <th>Field</th>
+            <th>Operator</th>
+            <th>Reference</th>
+            <th>Severity</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {rules.map((rule) => (
             <tr key={rule.id}>
               <td>
-                <strong>{rule.name || "Dato no disponible"}</strong>
-                <span>{rule.alertMessage || "Dato no disponible"}</span>
+                <strong>{rule.name || "Data unavailable"}</strong>
+                <span>{rule.alertMessage || "Data unavailable"}</span>
               </td>
-              <td>{rule.type || "Dato no disponible"}</td>
-              <td>{rule.targetField || "Dato no disponible"}</td>
-              <td>{rule.operator || "Dato no disponible"}</td>
-              <td>{rule.referenceValue || "Dato no disponible"}</td>
+              <td>{formatBusinessRuleLabel(rule.type)}</td>
+              <td>{rule.targetField || "Data unavailable"}</td>
+              <td>{formatBusinessRuleLabel(rule.operator)}</td>
+              <td>{rule.referenceValue || "Data unavailable"}</td>
               <td>
-                <span className={`severity-pill ${rule.severity?.toLowerCase() ?? ""}`}>{rule.severity || "Dato no disponible"}</span>
+                <span className={`severity-pill ${rule.severity?.toLowerCase() ?? ""}`}>{formatBusinessRuleLabel(rule.severity)}</span>
               </td>
               <td>
-                <span className={`file-status ${rule.status?.toLowerCase() ?? ""}`}>{rule.status || "Dato no disponible"}</span>
+                <span className={`file-status ${rule.status?.toLowerCase() ?? ""}`}>{formatBusinessRuleLabel(rule.status)}</span>
               </td>
               <td>
                 <div className="row-actions">
-                  <button className="icon-button" type="button" onClick={() => onEdit(rule)} aria-label="Editar regla">
+                  <button className="icon-button" type="button" onClick={() => onEdit(rule)} aria-label="Edit rule">
                     <Edit3 size={16} />
                   </button>
-                  <button className="icon-button" type="button" onClick={() => onToggle(rule.id)} aria-label="Activar o desactivar regla">
+                  <button className="icon-button" type="button" onClick={() => onToggle(rule.id)} aria-label="Enable or disable rule">
                     <Power size={16} />
                   </button>
-                  <button className="icon-button danger" type="button" onClick={() => onDelete(rule.id)} aria-label="Eliminar regla">
+                  <button className="icon-button danger" type="button" onClick={() => onDelete(rule.id)} aria-label="Delete rule">
                     <Trash2 size={16} />
                   </button>
                 </div>

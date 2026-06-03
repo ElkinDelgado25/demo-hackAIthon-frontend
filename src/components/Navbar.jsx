@@ -9,12 +9,12 @@ export function Navbar() {
           <span className="brand-mark">
             <ClipboardCheck size={20} />
           </span>
-          AuditIA
+          Agentic Auditor Cloud
         </NavLink>
 
         <div className="nav-menu" aria-label="Navegacion principal">
-          <NavbarLink to="/" icon={Home} label="Inicio" end />
-          <NavbarLink to="/dashboard" icon={PlayCircle} label="Iniciar auditoria" />
+          <NavbarLink to="/" icon={Home} label="Overview" end />
+          <NavbarLink to="/dashboard" icon={PlayCircle} label="Open workspace" />
         </div>
       </div>
     </nav>

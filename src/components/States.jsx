@@ -1,12 +1,12 @@
-export function LoadingState({ message = "Cargando informacion..." }) {
+export function LoadingState({ message = "Loading data..." }) {
   return <div className="form-message info">{message}</div>;
 }
 
-export function ErrorState({ message = "No se pudo consultar la informacion. Verifique la conexion con el backend." }) {
+export function ErrorState({ message = "Could not load data. Check backend connectivity." }) {
   return <div className="form-message error">{message}</div>;
 }
 
-export function EmptyState({ message = "Dato no disponible", detail }) {
+export function EmptyState({ message = "Data unavailable", detail }) {
   return (
     <div className="empty-state">
       <strong>{message}</strong>
@@ -19,7 +19,7 @@ export function StatCard({ label, value }) {
   return (
     <div className="metric-card">
       <span>{label}</span>
-      <strong>{isAvailable(value) ? value : "Dato no disponible"}</strong>
+      <strong>{isAvailable(value) ? value : "Data unavailable"}</strong>
     </div>
   );
 }
@@ -30,19 +30,19 @@ export function DenialReasonsCard({ reasons }) {
   return (
     <section className="route-panel">
       <div className="section-heading">
-        <h2>Principales razones de denegacion</h2>
+        <h2>Top denial reasons</h2>
       </div>
       {topReasons.length === 0 ? (
-        <EmptyState detail="No existen razones de denegacion registradas." />
+        <EmptyState detail="No denial reasons registered." />
       ) : (
         <div className="denial-reasons">
           {topReasons.map((item) => (
             <div className="finding" key={item.reason}>
               <div>
-                <strong>{item.reason || "Dato no disponible"}</strong>
-                <p>{isAvailable(item.count) ? `${item.count} caso(s)` : "Dato no disponible"}</p>
+                <strong>{item.reason || "Data unavailable"}</strong>
+                <p>{isAvailable(item.count) ? `${item.count} case(s)` : "Data unavailable"}</p>
               </div>
-              <span>{isAvailable(item.percentage) ? `${item.percentage}%` : "Dato no disponible"}</span>
+              <span>{isAvailable(item.percentage) ? `${item.percentage}%` : "Data unavailable"}</span>
             </div>
           ))}
         </div>

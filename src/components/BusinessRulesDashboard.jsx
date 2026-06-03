@@ -23,7 +23,7 @@ export function BusinessRulesDashboard() {
   const [rules, setRules] = useState([]);
   const [filters, setFilters] = useState(defaultFilters);
   const [editingRule, setEditingRule] = useState(null);
-  const [message, setMessage] = useState({ type: "info", text: "Administra las reglas que usara el auditor." });
+  const [message, setMessage] = useState({ type: "info", text: "Manage the rules used by the auditor." });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -38,7 +38,7 @@ export function BusinessRulesDashboard() {
       setRules(data);
       setError("");
     } catch {
-      setError("No se pudo consultar la informacion. Verifique la conexion con el backend.");
+      setError("Could not load data. Check backend connectivity.");
     } finally {
       setIsLoading(false);
     }
@@ -61,13 +61,13 @@ export function BusinessRulesDashboard() {
         await updateBusinessRule(editingRule.id, payload);
         await loadRules();
         setEditingRule(null);
-        setMessage({ type: "success", text: "Regla actualizada correctamente." });
+        setMessage({ type: "success", text: "Rule updated successfully." });
         return;
       }
 
       await createBusinessRule(payload);
       await loadRules();
-      setMessage({ type: "success", text: "Regla creada correctamente." });
+      setMessage({ type: "success", text: "Rule created successfully." });
     } catch (requestError) {
       setMessage({ type: "error", text: requestError.message });
     }
@@ -77,7 +77,7 @@ export function BusinessRulesDashboard() {
     try {
       await toggleBusinessRule(id);
       await loadRules();
-      setMessage({ type: "success", text: "Estado de regla actualizado correctamente." });
+      setMessage({ type: "success", text: "Rule status updated successfully." });
     } catch (requestError) {
       setMessage({ type: "error", text: requestError.message });
     }
@@ -90,7 +90,7 @@ export function BusinessRulesDashboard() {
       if (editingRule?.id === id) {
         setEditingRule(null);
       }
-      setMessage({ type: "success", text: "Regla eliminada correctamente." });
+      setMessage({ type: "success", text: "Rule deleted successfully." });
     } catch (requestError) {
       setMessage({ type: "error", text: requestError.message });
     }
