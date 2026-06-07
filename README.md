@@ -17,7 +17,6 @@ Frontend React + Vite para el reto AuditIA: auditor agentico de facturacion de s
 - Subida de documentos
 - Build y preview
 - Deploy en Vercel
-- Deploy en Google Cloud Run
 - Deploy del backend en Render
 - Verificacion rapida
 - Problemas comunes
@@ -511,30 +510,6 @@ Despues de cambiar variables en Vercel, haz redeploy.
 ```
 
 Esto permite refrescar rutas como `/dashboard/cases` sin recibir 404.
-
-## Deploy en Google Cloud Run
-
-El frontend esta preparado para Cloud Run con `Dockerfile` y Nginx.
-
-En la pantalla de configuracion desde GitHub:
-
-```text
-Rama: main
-Tipo de compilacion: Dockerfile
-Directorio de contexto de compilacion: /
-Dockerfile: /Dockerfile
-Puerto del contenedor: 8080
-```
-
-No configures `Objetivo de la funcion`; este repositorio es una aplicacion web, no una Cloud Function.
-
-Variable recomendada en Cloud Run:
-
-```env
-VITE_API_BASE_URL=https://demo-hackaithon-backend.onrender.com/api
-```
-
-Cloud Run puede cambiar esta variable sin reconstruir la imagen porque el contenedor genera `/env-config.js` al iniciar.
 
 ## Deploy del backend en Render
 
