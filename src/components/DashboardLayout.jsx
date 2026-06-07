@@ -10,17 +10,17 @@ export function DashboardLayout() {
             <ClipboardCheck size={20} />
           </span>
           <span>
-            <strong>AuditIA</strong>
-            <small>Auditoria interna</small>
+            <strong>Agentic Auditor</strong>
+            <small>SaaS control center</small>
           </span>
         </NavLink>
 
-        <nav className="dashboard-nav" aria-label="Navegacion del dashboard">
-          <SidebarLink to="/dashboard" icon={Gauge} label="Inicio" end />
-          <SidebarLink to="/dashboard/cases" icon={FileSearch} label="Casos" />
-          <SidebarLink to="/dashboard/files" icon={UploadCloud} label="Archivos" />
-          <SidebarLink to="/dashboard/rules" icon={Filter} label="Reglas" />
-          <SidebarLink to="/dashboard/history" icon={History} label="Historial" />
+        <nav className="dashboard-nav" aria-label="Dashboard navigation">
+          <SidebarLink to="/dashboard" icon={Gauge} label="Overview" end />
+          <SidebarLink to="/dashboard/cases" icon={FileSearch} label="Cases" />
+          <SidebarLink to="/dashboard/files" icon={UploadCloud} label="Documents" />
+          <SidebarLink to="/dashboard/rules" icon={Filter} label="Rules" />
+          <SidebarLink to="/dashboard/history" icon={History} label="History" />
         </nav>
       </aside>
 

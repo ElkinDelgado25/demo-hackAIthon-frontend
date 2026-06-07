@@ -11,9 +11,9 @@ export async function apiRequest(path, options = {}) {
   if (!response.ok) {
     const errorBody = await safeReadError(response);
     if (response.status >= 500) {
-      throw new Error(errorBody || "No se pudo ejecutar la auditoria. Revisa logs del backend.");
+      throw new Error(errorBody || "Could not run the audit. Check backend logs.");
     }
-    throw new Error(errorBody || `No se pudo consultar la informacion. Estado HTTP ${response.status}.`);
+    throw new Error(errorBody || `Could not load data. HTTP status ${response.status}.`);
   }
 
   if (response.status === 204) {
@@ -56,6 +56,6 @@ async function safeReadError(response) {
     const data = await response.json();
     return data.detail || data.message || JSON.stringify(data);
   } catch {
-    return response.statusText || "No se pudo consultar la informacion. Verifique la conexion con el backend.";
+    return response.statusText || "Could not load data. Check backend connectivity.";
   }
 }

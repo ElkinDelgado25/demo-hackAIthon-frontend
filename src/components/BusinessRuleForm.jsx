@@ -1,6 +1,6 @@
 import { Save, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { ruleOperators, ruleSeverities, ruleStatuses, ruleTypes } from "../data/businessRules";
+import { formatBusinessRuleLabel, ruleOperators, ruleSeverities, ruleStatuses, ruleTypes } from "../data/businessRules";
 
 const emptyForm = {
   name: "",
@@ -38,11 +38,11 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
     <form className="rule-form" onSubmit={handleSubmit}>
       <div className="section-heading">
         <div>
-          <p className="eyebrow">{editingRule ? "Editar" : "Nueva regla"}</p>
-          <h2>{editingRule ? editingRule.name : "Crear regla de negocio"}</h2>
+          <p className="eyebrow">{editingRule ? "Edit" : "New rule"}</p>
+          <h2>{editingRule ? editingRule.name : "Create business rule"}</h2>
         </div>
         {editingRule ? (
-          <button className="icon-button" type="button" onClick={onCancel} aria-label="Cancelar edicion">
+          <button className="icon-button" type="button" onClick={onCancel} aria-label="Cancel edit">
             <X size={18} />
           </button>
         ) : null}
@@ -50,23 +50,23 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
 
       <div className="form-grid">
         <label>
-          Nombre
+          Name
           <input value={form.name} onChange={(event) => updateField("name", event.target.value)} required />
         </label>
 
         <label>
-          Tipo de regla
+          Rule type
           <select value={form.type} onChange={(event) => updateField("type", event.target.value)}>
             {ruleTypes.map((type) => (
               <option key={type} value={type}>
-                {type}
+                {formatBusinessRuleLabel(type)}
               </option>
             ))}
           </select>
         </label>
 
         <label>
-          Campo objetivo
+          Target field
           <input
             value={form.targetField}
             onChange={(event) => updateField("targetField", event.target.value)}
@@ -76,43 +76,43 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
         </label>
 
         <label>
-          Operador
+          Operator
           <select value={form.operator} onChange={(event) => updateField("operator", event.target.value)}>
             {ruleOperators.map((operator) => (
               <option key={operator} value={operator}>
-                {operator}
+                {formatBusinessRuleLabel(operator)}
               </option>
             ))}
           </select>
         </label>
 
         <label>
-          Valor de referencia
+          Reference value
           <input
             value={form.referenceValue}
             onChange={(event) => updateField("referenceValue", event.target.value)}
-            placeholder="20, tarifario, factura"
+            placeholder="20, tariff, invoice"
             required
           />
         </label>
 
         <label>
-          Severidad
+          Severity
           <select value={form.severity} onChange={(event) => updateField("severity", event.target.value)}>
             {ruleSeverities.map((severity) => (
               <option key={severity} value={severity}>
-                {severity}
+                {formatBusinessRuleLabel(severity)}
               </option>
             ))}
           </select>
         </label>
 
         <label>
-          Estado
+          Status
           <select value={form.status} onChange={(event) => updateField("status", event.target.value)}>
             {ruleStatuses.map((status) => (
               <option key={status} value={status}>
-                {status}
+                {formatBusinessRuleLabel(status)}
               </option>
             ))}
           </select>
@@ -120,18 +120,18 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
       </div>
 
       <label>
-        Descripcion
+        Description
         <textarea value={form.description} onChange={(event) => updateField("description", event.target.value)} required />
       </label>
 
       <label>
-        Mensaje de alerta
+        Alert message
         <textarea value={form.alertMessage} onChange={(event) => updateField("alertMessage", event.target.value)} required />
       </label>
 
       <button className="primary-action" type="submit">
         <Save size={17} />
-        {editingRule ? "Guardar cambios" : "Crear regla"}
+        {editingRule ? "Save changes" : "Create rule"}
       </button>
     </form>
   );

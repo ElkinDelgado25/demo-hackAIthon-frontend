@@ -1,32 +1,31 @@
-import { BarChart3, Brain, Clock, Target } from "lucide-react";
+import { Bot, Gauge, Radar, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import hero from "../img/iaprohackiaton.jpg";
 import { HomeCard } from "./HomeCard";
 
 const cardData = [
   {
     id: 1,
-    title: "Inteligencia Artificial",
-    description: "Agentes inteligentes que analizan documentos y detectan anomalias automaticamente.",
-    icon: Brain
+    title: "Agentic reasoning",
+    description: "Specialized agents cross-check invoices, estimates, and policy rules in seconds.",
+    icon: Bot
   },
   {
     id: 2,
-    title: "Ahorro de tiempo",
-    description: "Reduce hasta el 80% del tiempo de revision manual de facturas.",
-    icon: Clock
+    title: "Live risk scoring",
+    description: "Each case gets dynamic confidence and impact scoring before manual intervention.",
+    icon: Radar
   },
   {
     id: 3,
-    title: "Mayor precision",
-    description: "Menos errores humanos, mas consistencia en cada auditoria.",
-    icon: Target
+    title: "Operational control",
+    description: "Track throughput, findings, and denial patterns from a single workspace.",
+    icon: Gauge
   },
   {
     id: 4,
-    title: "Reportes claros",
-    description: "Informes detallados y faciles de entender para tomar mejores decisiones.",
-    icon: BarChart3
+    title: "Enterprise trust",
+    description: "Built for compliance teams with traceable verdicts and review-ready evidence.",
+    icon: ShieldCheck
   }
 ];
 
@@ -37,22 +36,59 @@ export function Homepage() {
     <main className="home-container">
       <div className="home-banner">
         <div className="home-banner-text">
-          <p className="eyebrow">Reto 2</p>
-          <h1>Auditoria agentica de facturacion de siniestros</h1>
+          <p className="eyebrow">SaaS Agentic Auditor</p>
+          <h1>Autonomous claims auditing for modern insurance operations</h1>
           <p>
-            Detectamos automaticamente inconsistencias, cobros duplicados y sobreprecios en facturas de talleres antes de que
-            un humano revise la cuenta.
+            Orchestrate AI agents that validate documents, detect anomalies, and deliver clear verdicts before claims are paid.
           </p>
-          <button onClick={() => navigate("/dashboard")}>Iniciar auditoria</button>
+          <div className="home-badge-row" aria-label="Platform highlights">
+            <span>Case triage</span>
+            <span>Policy checks</span>
+            <span>Fraud signals</span>
+          </div>
+          <div className="hero-cta-group">
+            <button onClick={() => navigate("/dashboard")}>Launch platform</button>
+            <button className="hero-ghost" onClick={() => navigate("/dashboard/history")}>View audit history</button>
+          </div>
+          <div className="hero-kpis" aria-label="Key metrics">
+            <div className="hero-kpi">
+              <strong>82%</strong>
+              <span>faster audit cycle</span>
+            </div>
+            <div className="hero-kpi">
+              <strong>99.1%</strong>
+              <span>traceable decisions</span>
+            </div>
+            <div className="hero-kpi">
+              <strong>24/7</strong>
+              <span>agent monitoring</span>
+            </div>
+          </div>
         </div>
-        <img src={hero} alt="AuditIA" />
+        <div className="home-banner-visual" aria-hidden="true">
+          <div className="hero-orb" />
+          <div className="hero-panel">
+            <p>Active case</p>
+            <strong>CLM-2026-0142</strong>
+            <span>Severity: High</span>
+          </div>
+          <div className="hero-panel">
+            <p>Agent verdict</p>
+            <strong>Human review</strong>
+            <span>Potential overcharge +18.4%</span>
+          </div>
+          <div className="hero-panel">
+            <p>Processing queue</p>
+            <strong>126 docs/hour</strong>
+            <span>8 parallel validators online</span>
+          </div>
+        </div>
       </div>
 
       <div className="home-content">
-        <h2>Por que usar AuditIA</h2>
+        <h2>Why teams choose this agentic audit stack</h2>
         <p>
-          Nuestra solucion utiliza inteligencia artificial y automatizacion para hacer tus auditorias mas rapidas, precisas y
-          confiables.
+          From intake to final verdict, every step is automated, observable, and built for enterprise-level governance.
         </p>
         <section className="card-grid">
           {cardData.map((card) => (

@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { ruleSeverities, ruleStatuses, ruleTypes } from "../data/businessRules";
+import { formatBusinessRuleLabel, ruleSeverities, ruleStatuses, ruleTypes } from "../data/businessRules";
 
 export function BusinessRuleFilters({ filters, onChange }) {
   function updateFilter(name, value) {
@@ -7,25 +7,25 @@ export function BusinessRuleFilters({ filters, onChange }) {
   }
 
   return (
-    <section className="filters-panel" aria-label="Filtros de reglas">
+    <section className="filters-panel" aria-label="Rule filters">
       <label className="search-box compact">
         <Search size={17} />
         <input
           value={filters.search}
-          placeholder="Buscar regla por nombre"
+          placeholder="Search rule by name"
           onChange={(event) => updateFilter("search", event.target.value)}
         />
       </label>
 
-      <SelectFilter label="Tipo" value={filters.type} options={ruleTypes} onChange={(value) => updateFilter("type", value)} />
+      <SelectFilter label="Type" value={filters.type} options={ruleTypes} onChange={(value) => updateFilter("type", value)} />
       <SelectFilter
-        label="Severidad"
+        label="Severity"
         value={filters.severity}
         options={ruleSeverities}
         onChange={(value) => updateFilter("severity", value)}
       />
       <SelectFilter
-        label="Estado"
+        label="Status"
         value={filters.status}
         options={ruleStatuses}
         onChange={(value) => updateFilter("status", value)}
@@ -39,10 +39,10 @@ function SelectFilter({ label, value, options, onChange }) {
     <label>
       {label}
       <select value={value} onChange={(event) => onChange(event.target.value)}>
-        <option value="">Todos</option>
+        <option value="">All</option>
         {options.map((option) => (
           <option key={option} value={option}>
-            {option}
+            {formatBusinessRuleLabel(option)}
           </option>
         ))}
       </select>
