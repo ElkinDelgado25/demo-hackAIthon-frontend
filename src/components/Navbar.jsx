@@ -15,6 +15,7 @@ export function Navbar() {
         <div className="nav-menu" aria-label="Navegacion principal">
           <NavbarLink to="/" icon={Home} label="Overview" end />
           <NavbarLink to="/dashboard" icon={PlayCircle} label="Open workspace" />
+          <NavbarLink to="/dashboard/cases" icon={ClipboardCheck} label="Cases" />
         </div>
       </div>
     </nav>
