@@ -9,7 +9,7 @@ export function Navbar() {
           <span className="brand-mark">
             <ClipboardCheck size={20} />
           </span>
-          Agentic Auditor Cloud
+          Agente asegurados de therians
         </NavLink>
 
         <div className="nav-menu" aria-label="Navegacion principal">
