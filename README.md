@@ -1,10 +1,14 @@
-# AuditIA Frontend
+# SecureMax Frontend
 
-Frontend React + Vite para el reto AuditIA: auditor agentico de facturacion de siniestros. Esta aplicacion consume una API FastAPI externa; no se conecta directamente a MongoDB ni guarda credenciales de base de datos.
+SecureMax es el frontend React + Vite de la demo HackAIthon para auditoria agentica de reclamaciones de seguros. La plataforma ayuda a revisar documentos, detectar anomalias, aplicar reglas de negocio y entregar veredictos trazables antes de aprobar o rechazar un siniestro.
+
+Esta aplicacion consume una API FastAPI externa; no se conecta directamente a MongoDB ni guarda credenciales de base de datos.
 
 ## Tabla de contenido
 
 - Requisitos
+- Nombre y objetivo del programa
+- Funciones principales
 - Arquitectura
 - Instalacion local
 - Variables de entorno
@@ -36,10 +40,40 @@ Backend, si tambien quieres levantarlo localmente:
 - MongoDB local o MongoDB Atlas.
 - Entorno virtual `.venv`.
 
+## Nombre y objetivo del programa
+
+Nombre del programa:
+
+```text
+SecureMax
+```
+
+SecureMax esta pensado para equipos de seguros que necesitan acelerar la revision de reclamaciones sin perder trazabilidad. El frontend organiza el flujo completo: consulta de casos, carga de documentos, ejecucion de auditoria agentica, revision de hallazgos, administracion de reglas y seguimiento historico.
+
+Objetivos del programa:
+
+- Reducir el tiempo de revision documental en reclamaciones de seguros.
+- Comparar facturas, ordenes de reparacion, mano de obra, fotos y reglas de poliza.
+- Detectar inconsistencias, montos atipicos y documentos incompletos.
+- Entregar un veredicto claro para aprobar, observar, rechazar o enviar a revision humana.
+- Mantener evidencia visible para auditoria, cumplimiento y presentaciones de demo.
+
+## Funciones principales
+
+- Landing publica con acceso rapido a la plataforma SecureMax.
+- Dashboard operativo con metricas de casos, aprobaciones, rechazos y revisiones humanas.
+- Bandeja de casos con busqueda, filtros por estado y acceso al detalle.
+- Carga documental por caso con validacion de tipos obligatorios.
+- Auditoria agentica desde el frontend contra el backend FastAPI.
+- Resultado de auditoria con puntaje, veredicto, hallazgos, razones y documentos asociados.
+- Historial de auditorias recientes para seguimiento y demostracion.
+- Administracion de reglas de negocio para parametrizar criterios de revision.
+- Configuracion flexible de backend por variable `VITE_API_BASE_URL`.
+
 ## Arquitectura
 
 ```text
-React/Vite frontend
+SecureMax React/Vite frontend
   -> VITE_API_BASE_URL
   -> FastAPI backend
   -> MongoDB
@@ -177,7 +211,7 @@ Copy-Item .env.example .env
 Variables principales del backend:
 
 ```env
-APP_NAME=AuditIA API
+APP_NAME=SecureMax API
 ENVIRONMENT=development
 API_PREFIX=/api
 BACKEND_CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
@@ -196,12 +230,12 @@ UPLOAD_LOCAL_DIR=storage/uploads
 
 DEFAULT_ADMIN_EMAIL=admin@example.com
 DEFAULT_ADMIN_PASSWORD=change-me
-DEFAULT_ADMIN_FULL_NAME=AuditIA Admin
+DEFAULT_ADMIN_FULL_NAME=SecureMax Admin
 
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-3.5-turbo
 OPENAI_TEMPERATURE=0.1
-CHROMA_COLLECTION=auditia_documents
+CHROMA_COLLECTION=securemax_documents
 ```
 
 En produccion, cambia `JWT_SECRET_KEY`, configura `MONGODB_URI` real y no subas `.env` a Git.
