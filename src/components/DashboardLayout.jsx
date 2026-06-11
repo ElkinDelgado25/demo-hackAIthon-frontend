@@ -1,26 +1,27 @@
-import { ClipboardCheck, FileSearch, Filter, Gauge, History, UploadCloud } from "lucide-react";
+import { ClipboardCheck, FileSearch, Filter, Gauge, History, Home, UploadCloud } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 
 export function DashboardLayout() {
   return (
     <main className="dashboard-shell">
       <aside className="dashboard-sidebar">
-        <NavLink to="/dashboard" end className="dashboard-brand">
+        <NavLink to="/" className="dashboard-brand">
           <span className="dashboard-brand-mark">
             <ClipboardCheck size={20} />
           </span>
           <span>
-            <strong>Agentic Auditor</strong>
-            <small>SaaS control center</small>
+            <strong>SecureMAX</strong>
+            <small>Centro de control SaaS</small>
           </span>
         </NavLink>
 
-        <nav className="dashboard-nav" aria-label="Dashboard navigation">
-          <SidebarLink to="/dashboard" icon={Gauge} label="Overview" end />
-          <SidebarLink to="/dashboard/cases" icon={FileSearch} label="Cases" />
-          <SidebarLink to="/dashboard/files" icon={UploadCloud} label="Documents" />
-          <SidebarLink to="/dashboard/rules" icon={Filter} label="Rules" />
-          <SidebarLink to="/dashboard/history" icon={History} label="History" />
+        <nav className="dashboard-nav" aria-label="Navegacion del panel">
+          <SidebarLink to="/" icon={Home} label="Inicio" end />
+          <SidebarLink to="/dashboard" icon={Gauge} label="Resumen" end />
+          <SidebarLink to="/dashboard/cases" icon={FileSearch} label="Casos" />
+          <SidebarLink to="/dashboard/files" icon={UploadCloud} label="Documentos" />
+          <SidebarLink to="/dashboard/rules" icon={Filter} label="Reglas" />
+          <SidebarLink to="/dashboard/history" icon={History} label="Historial" />
         </nav>
       </aside>
 

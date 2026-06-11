@@ -9,13 +9,13 @@ export function Navbar() {
           <span className="brand-mark">
             <ClipboardCheck size={20} />
           </span>
-          Agente asegurados de therians
+          SecureMAX
         </NavLink>
 
         <div className="nav-menu" aria-label="Navegacion principal">
-          <NavbarLink to="/" icon={Home} label="Overview" end />
-          <NavbarLink to="/dashboard" icon={PlayCircle} label="Open workspace" />
-          <NavbarLink to="/dashboard/cases" icon={ClipboardCheck} label="Cases" />
+          <NavbarLink to="/" icon={Home} label="Inicio" end />
+          <NavbarLink to="/dashboard" icon={PlayCircle} label="Abrir panel" />
+          <NavbarLink to="/dashboard/cases" icon={ClipboardCheck} label="Casos" />
         </div>
       </div>
     </nav>

@@ -5,26 +5,26 @@ import { HomeCard } from "./HomeCard";
 const cardData = [
   {
     id: 1,
-    title: "Agentic reasoning",
-    description: "Specialized agents cross-check invoices, estimates, and policy rules in seconds.",
+    title: "Razonamiento agentico",
+    description: "Agentes especializados cruzan facturas, estimaciones y reglas de poliza en segundos.",
     icon: Bot
   },
   {
     id: 2,
-    title: "Live risk scoring",
-    description: "Each case gets dynamic confidence and impact scoring before manual intervention.",
+    title: "Puntaje de riesgo en vivo",
+    description: "Cada caso recibe un puntaje dinamico de confianza e impacto antes de la revision manual.",
     icon: Radar
   },
   {
     id: 3,
-    title: "Operational control",
-    description: "Track throughput, findings, and denial patterns from a single workspace.",
+    title: "Control operativo",
+    description: "Monitorea productividad, hallazgos y patrones de rechazo desde un solo espacio de trabajo.",
     icon: Gauge
   },
   {
     id: 4,
-    title: "Enterprise trust",
-    description: "Built for compliance teams with traceable verdicts and review-ready evidence.",
+    title: "Confianza empresarial",
+    description: "Creado para equipos de cumplimiento con veredictos trazables y evidencia lista para revisar.",
     icon: ShieldCheck
   }
 ];
@@ -36,59 +36,59 @@ export function Homepage() {
     <main className="home-container">
       <div className="home-banner">
         <div className="home-banner-text">
-          <p className="eyebrow">SaaS Agentic Auditor</p>
-          <h1>Autonomous claims auditing for modern insurance operations</h1>
+          <p className="eyebrow">Auditor agentico SaaS</p>
+          <h1>Auditoria autonoma de siniestros para aseguradoras modernas</h1>
           <p>
-            Orchestrate AI agents that validate documents, detect anomalies, and deliver clear verdicts before claims are paid.
+            Orquesta agentes de IA que validan documentos, detectan anomalias y entregan veredictos claros antes de pagar reclamaciones.
           </p>
-          <div className="home-badge-row" aria-label="Platform highlights">
-            <span>Case triage</span>
-            <span>Policy checks</span>
-            <span>Fraud signals</span>
+          <div className="home-badge-row" aria-label="Puntos clave de la plataforma">
+            <span>Triaje de casos</span>
+            <span>Validacion de polizas</span>
+            <span>Senales de fraude</span>
           </div>
           <div className="hero-cta-group">
-            <button onClick={() => navigate("/dashboard")}>Launch platform</button>
-            <button className="hero-ghost" onClick={() => navigate("/dashboard/history")}>View audit history</button>
+            <button onClick={() => navigate("/dashboard")}>Abrir plataforma</button>
+            <button className="hero-ghost" onClick={() => navigate("/dashboard/history")}>Ver historial de auditorias</button>
           </div>
-          <div className="hero-kpis" aria-label="Key metrics">
+          <div className="hero-kpis" aria-label="Metricas clave">
             <div className="hero-kpi">
               <strong>82%</strong>
-              <span>faster audit cycle</span>
+              <span>ciclo de auditoria mas rapido</span>
             </div>
             <div className="hero-kpi">
               <strong>99.1%</strong>
-              <span>traceable decisions</span>
+              <span>decisiones trazables</span>
             </div>
             <div className="hero-kpi">
               <strong>24/7</strong>
-              <span>agent monitoring</span>
+              <span>monitoreo de agentes</span>
             </div>
           </div>
         </div>
         <div className="home-banner-visual" aria-hidden="true">
           <div className="hero-orb" />
           <div className="hero-panel">
-            <p>Active case</p>
+            <p>Caso activo</p>
             <strong>CLM-2026-0142</strong>
-            <span>Severity: High</span>
+            <span>Severidad: alta</span>
           </div>
           <div className="hero-panel">
-            <p>Agent verdict</p>
-            <strong>Human review</strong>
-            <span>Potential overcharge +18.4%</span>
+            <p>Veredicto del agente</p>
+            <strong>Revision humana</strong>
+            <span>Posible sobrecargo +18.4%</span>
           </div>
           <div className="hero-panel">
-            <p>Processing queue</p>
-            <strong>126 docs/hour</strong>
-            <span>8 parallel validators online</span>
+            <p>Cola de procesamiento</p>
+            <strong>126 docs/hora</strong>
+            <span>8 validadores paralelos activos</span>
           </div>
         </div>
       </div>
 
       <div className="home-content">
-        <h2>Why teams choose this agentic audit stack</h2>
+        <h2>Por que los equipos eligen esta plataforma de auditoria agentica</h2>
         <p>
-          From intake to final verdict, every step is automated, observable, and built for enterprise-level governance.
+          Desde la recepcion hasta el veredicto final, cada paso es automatizado, observable y disenado para gobierno empresarial.
         </p>
         <section className="card-grid">
           {cardData.map((card) => (
