@@ -1,5 +1,6 @@
 import { RefreshCcw, Trash2 } from "lucide-react";
 import { formatFileSize } from "../services/uploadService";
+import { displayLabel, displayText } from "../utils/displayText";
 import { EmptyState } from "./States";
 
 const dateFormatter = new Intl.DateTimeFormat("es-EC", {
@@ -56,7 +57,7 @@ export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocu
               <td>
                 <strong>{upload.name}</strong>
                 <span>Analisis: {displayFileStatus(upload.parseStatus || upload.extractionStatus) || "Dato no disponible"}</span>
-                {upload.parseError ? <span>Error de analisis: {upload.parseError}</span> : null}
+                {upload.parseError ? <span>Error de analisis: {displayText(upload.parseError)}</span> : null}
               </td>
               <td>{upload.auditNumber || "Dato no disponible"}</td>
               <td>{formatFileSize(upload.size)}</td>
@@ -101,7 +102,7 @@ function documentLabel(documentType) {
     SUSTENTO_ADICIONAL: "Documento de sustento"
   };
 
-  return labels[documentType] ?? documentType ?? "Dato no disponible";
+  return labels[documentType] ?? displayLabel(documentType) ?? "Dato no disponible";
 }
 
 function displayFileStatus(status) {
@@ -117,5 +118,5 @@ function displayFileStatus(status) {
     processed: "Procesado"
   };
 
-  return labels[status] ?? status ?? "Dato no disponible";
+  return labels[status] ?? displayLabel(status) ?? "Dato no disponible";
 }

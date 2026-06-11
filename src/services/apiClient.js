@@ -1,4 +1,5 @@
 import { appConfig } from "../config/appConfig";
+import { displayText } from "../utils/displayText";
 
 export async function apiRequest(path, options = {}) {
   const isFormData = options.body instanceof FormData;
@@ -9,7 +10,7 @@ export async function apiRequest(path, options = {}) {
   });
 
   if (!response.ok) {
-    const errorBody = await safeReadError(response);
+    const errorBody = displayText(await safeReadError(response));
     if (response.status >= 500) {
       throw new Error(errorBody || "No se pudo ejecutar la auditoria. Revisa los logs del backend.");
     }

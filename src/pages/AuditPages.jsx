@@ -9,6 +9,7 @@ import { fetchCaseById, fetchCases } from "../services/caseService";
 import { generateFinalVerdict, getAllAuditHistory, getAuditHistory, getLatestAudit, runAudit } from "../services/auditService";
 import { fetchDashboardStatistics, fetchDenialReasons } from "../services/statisticsService";
 import { getAllDocuments } from "../services/uploadService";
+import { displayLabel, displayText } from "../utils/displayText";
 
 const statusCopy = {
   alto: "Riesgo alto",
@@ -196,14 +197,14 @@ export function CasesPage() {
             Estado
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
               <option value="">Todos</option>
-              <option value="NUEVO">NUEVO</option>
-              <option value="PENDIENTE_DOCUMENTOS">PENDIENTE_DOCUMENTOS</option>
-              <option value="LISTO_PARA_AUDITORIA">LISTO_PARA_AUDITORIA</option>
-              <option value="EN_AUDITORIA">EN_AUDITORIA</option>
-              <option value="OBSERVADO">OBSERVADO</option>
-              <option value="APROBADO">APROBADO</option>
-              <option value="DENEGADO">DENEGADO</option>
-              <option value="REVISION_HUMANA">REVISION_HUMANA</option>
+              <option value="NUEVO">Nuevo</option>
+              <option value="PENDIENTE_DOCUMENTOS">Pendiente de documentos</option>
+              <option value="LISTO_PARA_AUDITORIA">Listo para auditoria</option>
+              <option value="EN_AUDITORIA">En auditoria</option>
+              <option value="OBSERVADO">Observado</option>
+              <option value="APROBADO">Aprobado</option>
+              <option value="DENEGADO">Denegado</option>
+              <option value="REVISION_HUMANA">Revision humana</option>
             </select>
           </label>
         </div>
@@ -636,8 +637,8 @@ function CaseDetail({ selectedCase, compact }) {
           selectedCase.findings.map((finding) => (
             <div className="finding" key={finding.id ?? finding.title}>
               <div>
-                <strong>{finding.title || unavailable}</strong>
-                <p>{finding.detail || finding.message || unavailable}</p>
+                <strong>{displayText(finding.title || unavailable)}</strong>
+                <p>{displayText(finding.detail || finding.message || unavailable)}</p>
               </div>
               <span>{isAvailable(finding.impact) ? currency.format(finding.impact) : unavailable}</span>
             </div>
@@ -662,7 +663,7 @@ function CaseRow({ auditCase, active, onSelectCase }) {
       </div>
       <div className="case-amount">
         <strong>{isAvailable(auditCase.invoiceTotal) ? currency.format(auditCase.invoiceTotal) : unavailable}</strong>
-        <span>{auditCase.rawStatus || unavailable}</span>
+        <span>{displayLabel(auditCase.rawStatus || unavailable)}</span>
       </div>
     </button>
   );
@@ -678,9 +679,9 @@ function AuditResultCard({ result }) {
     <section className="route-panel">
       <div className="detail-header">
         <div>
-          <span className={`status-pill ${auditStatusClass(result.status)}`}>{result.status || unavailable}</span>
+          <span className={`status-pill ${auditStatusClass(result.status)}`}>{displayLabel(result.status || unavailable)}</span>
           <h2>{result.auditId || unavailable}</h2>
-          <p>{result.summary || unavailable}</p>
+          <p>{displayText(result.summary || unavailable)}</p>
         </div>
         <div className="confidence">
           <strong>{isAvailable(result.confidence) ? `${Math.round(result.confidence * 100)}%` : unavailable}</strong>
@@ -696,7 +697,7 @@ function AuditResultCard({ result }) {
       </div>
 
       <ResultSection title="Veredicto final">
-        <div className="form-message info">{result.finalVerdict || unavailable}</div>
+        <div className="form-message info">{displayText(result.finalVerdict || unavailable)}</div>
       </ResultSection>
 
       <ResultSection title="Hallazgos">
@@ -706,10 +707,10 @@ function AuditResultCard({ result }) {
           findings.map((item, index) => (
             <div className="finding" key={`${item.type ?? item.title ?? "finding"}-${index}`}>
               <div>
-                <strong>{item.title || item.type || unavailable}</strong>
-                <p>{item.message || item.detail || unavailable}</p>
+                <strong>{displayText(item.title || item.type || unavailable)}</strong>
+                <p>{displayText(item.message || item.detail || unavailable)}</p>
               </div>
-              <span>{item.severity || item.impact || unavailable}</span>
+              <span>{displayText(item.severity || item.impact || unavailable)}</span>
             </div>
           ))
         )}
@@ -723,14 +724,14 @@ function AuditResultCard({ result }) {
           discrepancies.map((item, index) => (
             <div className="finding" key={`${item.type}-${index}`}>
               <div>
-                <strong>{item.type || unavailable}</strong>
-                <p>{item.message || unavailable}</p>
+                <strong>{displayText(item.type || unavailable)}</strong>
+                <p>{displayText(item.message || unavailable)}</p>
                 <p>
-                  Esperado: {valueOrUnavailable(item.expected)} | Encontrado: {valueOrUnavailable(item.found)}
-                  {item.documentType ? ` | Documento: ${item.documentType}` : ""}
+                  Esperado: {displayText(valueOrUnavailable(item.expected))} | Encontrado: {displayText(valueOrUnavailable(item.found))}
+                  {item.documentType ? ` | Documento: ${displayLabel(item.documentType)}` : ""}
                 </p>
               </div>
-              <span>{item.difference ?? item.severity ?? unavailable}</span>
+              <span>{displayText(item.difference ?? item.severity ?? unavailable)}</span>
             </div>
           ))
         )}
@@ -743,8 +744,8 @@ function AuditResultCard({ result }) {
           topReasons.map((item, index) => (
             <div className="finding" key={`${item.reason ?? item.type ?? "reason"}-${index}`}>
               <div>
-                <strong>{item.reason || item.type || unavailable}</strong>
-                <p>{item.message || item.detail || unavailable}</p>
+                <strong>{displayText(item.reason || item.type || unavailable)}</strong>
+                <p>{displayText(item.message || item.detail || unavailable)}</p>
               </div>
               <span>{item.percentage ? `${item.percentage}%` : item.count ?? unavailable}</span>
             </div>
@@ -759,16 +760,16 @@ function AuditResultCard({ result }) {
           documents.map((document, index) => (
             <div className="finding" key={`${document.name ?? document.originalName ?? "document"}-${index}`}>
               <div>
-                <strong>{document.documentType || document.type || unavailable}</strong>
+                <strong>{displayLabel(document.documentType || document.type || unavailable)}</strong>
                 <p>{document.originalName || document.name || unavailable}</p>
               </div>
-              <span>{document.parseStatus || document.status || unavailable}</span>
+              <span>{displayLabel(document.parseStatus || document.status || unavailable)}</span>
             </div>
           ))
         )}
       </ResultSection>
 
-      <div className="form-message info">{result.recommendation || unavailable}</div>
+      <div className="form-message info">{displayText(result.recommendation || unavailable)}</div>
     </section>
   );
 }
@@ -815,7 +816,7 @@ function AuditHistoryPreview({ history }) {
                 <span>{item.caseId ?? unavailable}</span>
               </div>
               <div className="case-amount">
-                <strong>{item.status ?? unavailable}</strong>
+                <strong>{displayLabel(item.status ?? unavailable)}</strong>
                 <span>{item.createdAt ? new Date(item.createdAt).toLocaleString("es-EC") : unavailable}</span>
               </div>
             </Link>

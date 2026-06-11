@@ -1,3 +1,5 @@
+import { displayText } from "../utils/displayText";
+
 export function LoadingState({ message = "Cargando datos..." }) {
   return <div className="form-message info">{message}</div>;
 }
@@ -39,7 +41,7 @@ export function DenialReasonsCard({ reasons }) {
           {topReasons.map((item) => (
             <div className="finding" key={item.reason}>
               <div>
-                <strong>{item.reason || "Dato no disponible"}</strong>
+                <strong>{displayText(item.reason || "Dato no disponible")}</strong>
                 <p>{isAvailable(item.count) ? `${item.count} caso(s)` : "Dato no disponible"}</p>
               </div>
               <span>{isAvailable(item.percentage) ? `${item.percentage}%` : "Dato no disponible"}</span>

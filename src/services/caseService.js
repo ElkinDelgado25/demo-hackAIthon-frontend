@@ -47,14 +47,24 @@ function toNumberOrNull(value) {
 function normalizeCaseStatus(status) {
   const statusMap = {
     APROBADO: "bajo",
+    APPROVED: "bajo",
     OBSERVADO: "alto",
+    OBSERVED: "alto",
     DENEGADO: "alto",
+    DENIED: "alto",
     REVISION_HUMANA: "medio",
+    HUMAN_REVIEW: "medio",
     EN_AUDITORIA: "medio",
+    IN_AUDIT: "medio",
     LISTO_PARA_AUDITORIA: "bajo",
+    READY_FOR_AUDIT: "bajo",
+    READY: "bajo",
     PENDIENTE_DOCUMENTOS: "medio",
-    NUEVO: "medio"
+    PENDING_DOCUMENTS: "medio",
+    PENDING: "medio",
+    NUEVO: "medio",
+    NEW: "medio"
   };
 
-  return statusMap[status] ?? "medio";
+  return statusMap[String(status ?? "").toUpperCase().replace(/[\s-]+/g, "_")] ?? "medio";
 }
