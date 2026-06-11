@@ -25,7 +25,7 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
   const [uploads, setUploads] = useState([]);
   const [auditNumber, setAuditNumber] = useState(defaultAuditNumber ?? "");
   const [selectedFiles, setSelectedFiles] = useState([]);
-  const [message, setMessage] = useState({ type: "info", text: "Select documents to attach to this audit run." });
+  const [message, setMessage] = useState({ type: "info", text: "Selecciona documentos para adjuntar a esta auditoria." });
   const [isLoadingDocuments, setIsLoadingDocuments] = useState(false);
   const [documentsError, setDocumentsError] = useState("");
   const [isAuditing, setIsAuditing] = useState(false);
@@ -54,7 +54,7 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
       })
       .catch(() => {
         if (isMounted) {
-          setDocumentsError("Could not load data. Check backend connectivity.");
+          setDocumentsError("No se pudieron cargar los datos. Revisa la conexion con el backend.");
         }
       })
       .finally(() => {
@@ -135,7 +135,7 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
         documentType: suggestDocumentType(file.name)
       }))
     ]);
-    setMessage({ type: "success", text: `${incomingFiles.length} file(s) added to queue.` });
+    setMessage({ type: "success", text: `${incomingFiles.length} archivo(s) agregado(s) a la cola.` });
     event.target.value = "";
   }
 
@@ -153,12 +153,12 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
     setUploads((currentUploads) =>
       currentUploads.map((upload) => (upload.id === uploadId ? { ...upload, documentType } : upload))
     );
-    setMessage({ type: "success", text: "Document type updated for this audit run." });
+    setMessage({ type: "success", text: "Tipo de documento actualizado para esta auditoria." });
   }
 
   function validateRequiredDocuments() {
     if (missingRequiredTypes.length > 0) {
-      return `Missing required documents: ${missingRequiredTypes.join(", ")}.`;
+      return `Faltan documentos obligatorios: ${missingRequiredTypes.map(documentLabel).join(", ")}.`;
     }
 
     return "";
@@ -178,7 +178,7 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
         size: document.size,
         mimeType: document.mimeType
       })),
-      requestedBy: "Workshop",
+      requestedBy: "Taller",
       source: "frontend-dashboard"
     };
   }
@@ -187,12 +187,12 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
     event.preventDefault();
 
     if (!auditNumber.trim()) {
-      setMessage({ type: "error", text: "Select or enter a claim number." });
+      setMessage({ type: "error", text: "Selecciona o ingresa un numero de reclamo." });
       return;
     }
 
     if (selectedFiles.length === 0 && uploads.length === 0) {
-      setMessage({ type: "error", text: "Select at least one file to audit." });
+      setMessage({ type: "error", text: "Selecciona al menos un archivo para auditar." });
       return;
     }
 
@@ -209,7 +209,7 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
     }
 
     setIsAuditing(true);
-    setMessage({ type: "info", text: "Running agent audit" });
+    setMessage({ type: "info", text: "Ejecutando auditoria agentica" });
 
     try {
       const uploadResponse = selectedFiles.length ? await uploadDocuments(auditNumber.trim(), selectedFiles) : null;
@@ -226,10 +226,10 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      setMessage({ type: "success", text: "Audit completed successfully." });
+      setMessage({ type: "success", text: "Auditoria completada correctamente." });
       navigate(`/dashboard/cases/${auditNumber.trim()}/result`, { state: { result } });
     } catch (error) {
-      setMessage({ type: "error", text: error.message || "Could not load data. Check backend connectivity." });
+      setMessage({ type: "error", text: error.message || "No se pudieron cargar los datos. Revisa la conexion con el backend." });
     } finally {
       setIsAuditing(false);
     }
@@ -239,8 +239,8 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
     <section className="upload-panel">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Documents</p>
-          <h2>Audit documents</h2>
+          <p className="eyebrow">Documentos</p>
+          <h2>Documentos de auditoria</h2>
         </div>
         <div className="agent-icon">
           <FileUp size={20} />
@@ -249,13 +249,13 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
 
       <form className="upload-form" onSubmit={handleSubmit}>
         <label>
-          Claim or audit id
+          Reclamo o ID de auditoria
           <input value={auditNumber} onChange={(event) => setAuditNumber(event.target.value)} placeholder="SIN-2026-0148" />
         </label>
 
         <label className="file-picker">
           <UploadCloud size={20} />
-          <span>{selectedFiles.length ? `${selectedFiles.length} file(s) selected` : "Select files"}</span>
+          <span>{selectedFiles.length ? `${selectedFiles.length} archivo(s) seleccionado(s)` : "Seleccionar archivos"}</span>
           <input
             ref={fileInputRef}
             type="file"
@@ -267,33 +267,33 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
 
         <button className="primary-action" type="submit" disabled={isAuditing}>
           <UploadCloud size={17} />
-          {isAuditing ? "Running agent audit" : "Upload and audit"}
+          {isAuditing ? "Ejecutando auditoria agentica" : "Subir y auditar"}
         </button>
       </form>
 
       <div className="upload-helper">
-        <span>Formats: {allowedUploadExtensions.map((item) => item.toUpperCase()).join(", ")}</span>
-        <span>Max total: {formatFileSize(maxUploadSizeBytes)}</span>
-        <span>Already uploaded: {formatFileSize(currentAuditUploadsTotalBytes)}</span>
-        <span>Selected: {formatFileSize(selectedTotalBytes)}</span>
+        <span>Formatos: {allowedUploadExtensions.map((item) => item.toUpperCase()).join(", ")}</span>
+        <span>Maximo total: {formatFileSize(maxUploadSizeBytes)}</span>
+        <span>Ya subido: {formatFileSize(currentAuditUploadsTotalBytes)}</span>
+        <span>Seleccionado: {formatFileSize(selectedTotalBytes)}</span>
       </div>
 
       <DocumentReadinessChecklist documentTypes={documentTypes} isAuditReady={isAuditReady} />
 
-      {isLoadingDocuments ? <LoadingState message="Loading case documents..." /> : null}
+      {isLoadingDocuments ? <LoadingState message="Cargando documentos del caso..." /> : null}
       {documentsError ? <ErrorState message={documentsError} /> : null}
       {selectedFilesError ? <div className="form-message error">{selectedFilesError}</div> : null}
       <div className={`form-message ${message.type}`}>{message.text}</div>
 
       {selectedFiles.length ? (
         <div className="selected-files">
-          <h3>Selected files</h3>
+          <h3>Archivos seleccionados</h3>
           {selectedFiles.map((item, index) => (
             <div className="selected-file-row" key={`${item.file.name}-${item.file.lastModified}-${index}`}>
               <div>
                 <strong>{item.file.name}</strong>
                 <span>
-                  {formatFileSize(item.file.size)} - {(item.file.name.split(".").pop() ?? "file").toUpperCase()} - pending
+                  {formatFileSize(item.file.size)} - {(item.file.name.split(".").pop() ?? "archivo").toUpperCase()} - pendiente
                 </span>
               </div>
               <select value={item.documentType} onChange={(event) => handleChangeDocumentType(index, event.target.value)}>
@@ -304,7 +304,7 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
                 ))}
               </select>
               <button className="icon-button danger" type="button" onClick={() => handleRemoveSelectedFile(index)}>
-                Remove
+                Quitar
               </button>
             </div>
           ))}
@@ -322,17 +322,17 @@ export function FileUploadSection({ defaultAuditNumber, auditCase }) {
 
 function DocumentReadinessChecklist({ documentTypes, isAuditReady }) {
   return (
-    <div className={`audit-checklist ${isAuditReady ? "ready" : ""}`} aria-label="Required documents for audit">
+    <div className={`audit-checklist ${isAuditReady ? "ready" : ""}`} aria-label="Documentos obligatorios para auditoria">
       {requiredDocumentTypes.map((documentType) => {
         const isComplete = documentTypes.has(documentType);
 
         return (
           <span className={isComplete ? "complete" : "missing"} key={documentType}>
-            {documentLabel(documentType)}: {isComplete ? "complete" : "pending"}
+            {documentLabel(documentType)}: {isComplete ? "completo" : "pendiente"}
           </span>
         );
       })}
-      <strong>{isAuditReady ? "Ready to audit" : "Complete or reclassify documents to run audit"}</strong>
+      <strong>{isAuditReady ? "Listo para auditar" : "Completa o reclasifica documentos para auditar"}</strong>
     </div>
   );
 }
@@ -358,8 +358,8 @@ function createSelectedDocument(item, auditNumber) {
     mimeType: item.file.type || "application/octet-stream",
     uploadedAt: new Date().toISOString(),
     status: "cargado",
-    extractionStatus: "pending",
-    parseStatus: "pending",
+    extractionStatus: "pendiente",
+    parseStatus: "pendiente",
     parseError: ""
   };
 }
@@ -409,13 +409,13 @@ function suggestDocumentType(fileName) {
 
 function documentLabel(documentType) {
   const labels = {
-    FACTURA: "Invoice",
-    ORDEN_REPARACION: "Repair order",
-    DETALLE_MANO_OBRA: "Labor detail",
-    FOTOS_DANIO: "Damage photos",
-    TARIFARIO: "Tariff sheet",
-    POLIZA: "Policy",
-    SUSTENTO_ADICIONAL: "Supporting document"
+    FACTURA: "Factura",
+    ORDEN_REPARACION: "Orden de reparacion",
+    DETALLE_MANO_OBRA: "Detalle de mano de obra",
+    FOTOS_DANIO: "Fotos del danio",
+    TARIFARIO: "Tarifario",
+    POLIZA: "Poliza",
+    SUSTENTO_ADICIONAL: "Documento de sustento"
   };
 
   return labels[documentType] ?? documentType;

@@ -4,13 +4,13 @@ import { apiRequest } from "./apiClient";
 export const allowedUploadExtensions = ["pdf", "csv", "xlsx", "json", "png", "jpg", "jpeg", "txt"];
 export const requiredDocumentTypes = ["FACTURA", "ORDEN_REPARACION", "DETALLE_MANO_OBRA", "FOTOS_DANIO"];
 export const documentTypeOptions = [
-  { value: "FACTURA", label: "Invoice" },
-  { value: "ORDEN_REPARACION", label: "Repair order" },
-  { value: "DETALLE_MANO_OBRA", label: "Labor detail" },
-  { value: "FOTOS_DANIO", label: "Damage photos" },
-  { value: "TARIFARIO", label: "Tariff sheet" },
-  { value: "POLIZA", label: "Policy" },
-  { value: "SUSTENTO_ADICIONAL", label: "Supporting document" }
+  { value: "FACTURA", label: "Factura" },
+  { value: "ORDEN_REPARACION", label: "Orden de reparacion" },
+  { value: "DETALLE_MANO_OBRA", label: "Detalle de mano de obra" },
+  { value: "FOTOS_DANIO", label: "Fotos del danio" },
+  { value: "TARIFARIO", label: "Tarifario" },
+  { value: "POLIZA", label: "Poliza" },
+  { value: "SUSTENTO_ADICIONAL", label: "Documento de sustento" }
 ];
 export const maxUploadSizeBytes = 20 * 1024 * 1024;
 
@@ -18,11 +18,11 @@ export function validateAuditFile(file) {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
 
   if (!allowedUploadExtensions.includes(extension)) {
-    return "Unsupported file type. Use PDF, CSV, XLSX, JSON, PNG, JPG, JPEG, or TXT.";
+    return "Tipo de archivo no permitido. Usa PDF, CSV, XLSX, JSON, PNG, JPG, JPEG o TXT.";
   }
 
   if (file.size > maxUploadSizeBytes) {
-    return `The file exceeds the total allowed maximum of ${formatFileSize(maxUploadSizeBytes)}.`;
+    return `El archivo supera el maximo permitido de ${formatFileSize(maxUploadSizeBytes)}.`;
   }
 
   return "";
@@ -33,7 +33,7 @@ export function validateAuditFilesTotal(files, currentTotalBytes = 0) {
   const nextTotal = currentTotalBytes + filesTotal;
 
   if (nextTotal > maxUploadSizeBytes) {
-    return `The selected total exceeds ${formatFileSize(maxUploadSizeBytes)}. Current total: ${formatFileSize(nextTotal)}.`;
+    return `El total seleccionado supera ${formatFileSize(maxUploadSizeBytes)}. Total actual: ${formatFileSize(nextTotal)}.`;
   }
 
   return "";
@@ -95,13 +95,13 @@ export function normalizeDocument(document) {
     id: document.id ?? document.documentId ?? document.name,
     auditNumber: document.auditNumber ?? document.caseId ?? document.case_id ?? "",
     documentType: document.documentType ?? document.document_type ?? document.type ?? "",
-    name: document.originalName ?? document.name ?? document.filename ?? document.fileName ?? "Data unavailable",
+    name: document.originalName ?? document.name ?? document.filename ?? document.fileName ?? "Dato no disponible",
     size: Number(document.size ?? 0),
     type: document.extension ?? document.fileType ?? document.mimeType ?? document.mime_type ?? "",
     mimeType: document.mimeType ?? document.mime_type ?? "",
     uploadedAt: document.uploadedAt ?? document.createdAt ?? document.created_at ?? "",
     status: document.status ?? "cargado",
-    extractionStatus: document.parseStatus ?? document.extractionStatus ?? document.extraction_status ?? "Data unavailable",
+    extractionStatus: document.parseStatus ?? document.extractionStatus ?? document.extraction_status ?? "Dato no disponible",
     parseStatus: document.parseStatus ?? document.extractionStatus ?? document.extraction_status ?? "",
     parseError: document.parseError ?? document.parse_error ?? ""
   };

@@ -11,9 +11,9 @@ import { fetchDashboardStatistics, fetchDenialReasons } from "../services/statis
 import { getAllDocuments } from "../services/uploadService";
 
 const statusCopy = {
-  alto: "High risk",
-  medio: "Needs review",
-  bajo: "Ready"
+  alto: "Riesgo alto",
+  medio: "Requiere revision",
+  bajo: "Listo"
 };
 
 const statusIcon = {
@@ -29,7 +29,7 @@ const currency = new Intl.NumberFormat("es-EC", {
 });
 
 const POLLING_INTERVAL_MS = 5 * 60 * 1000;
-const unavailable = "Data unavailable";
+const unavailable = "Dato no disponible";
 
 export function DashboardPage() {
   const [statistics, setStatistics] = useState(null);
@@ -58,7 +58,7 @@ export function DashboardPage() {
         setDenialReasons(reasons);
       } catch {
         if (isMounted) {
-          setError("Could not load data. Check backend connectivity.");
+          setError("No se pudieron cargar los datos. Revisa la conexion con el backend.");
         }
       } finally {
         if (isMounted) {
@@ -76,7 +76,7 @@ export function DashboardPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Operations" title="Agentic audit command center" />
+      <PageHeader eyebrow="Operaciones" title="Centro de comando de auditoria agentica" />
       {isLoading ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
       <Metrics statistics={statistics} />
@@ -135,7 +135,7 @@ export function CasesPage() {
         }
       } catch {
         if (isMounted) {
-          setError("Could not load data. Check backend connectivity.");
+          setError("No se pudieron cargar los datos. Revisa la conexion con el backend.");
         }
       } finally {
         if (isMounted) {
@@ -167,35 +167,35 @@ export function CasesPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Case inbox" title="End-to-end claims intake and triage" />
+      <PageHeader eyebrow="Bandeja de casos" title="Recepcion y triaje integral de reclamos" />
       <section className="route-panel">
         <div className="section-heading">
           <div>
-            <h2>Incoming claims queue</h2>
-            {lastUpdated ? <p className="section-note">Last sync: {lastUpdated.toLocaleTimeString("es-EC")}</p> : null}
+            <h2>Cola de reclamos entrantes</h2>
+            {lastUpdated ? <p className="section-note">Ultima sincronizacion: {lastUpdated.toLocaleTimeString("es-EC")}</p> : null}
           </div>
-          <button className="icon-button" aria-label="Filter cases">
+          <button className="icon-button" aria-label="Filtrar casos">
             <Filter size={18} />
           </button>
         </div>
         {isLoading ? <LoadingState /> : null}
         {error ? <ErrorState message={error} /> : null}
         {newCasesCount > 0 ? (
-          <div className="form-message success">{newCasesCount} new case(s) detected in the latest sync.</div>
+          <div className="form-message success">{newCasesCount} caso(s) nuevo(s) detectado(s) en la ultima sincronizacion.</div>
         ) : null}
         <div className="case-filters">
           <label>
-            Search
+            Buscar
             <input
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Claim code, plate, or vehicle"
+              placeholder="Codigo, placa o vehiculo"
             />
           </label>
           <label>
-            Status
+            Estado
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option value="">All</option>
+              <option value="">Todos</option>
               <option value="NUEVO">NUEVO</option>
               <option value="PENDIENTE_DOCUMENTOS">PENDIENTE_DOCUMENTOS</option>
               <option value="LISTO_PARA_AUDITORIA">LISTO_PARA_AUDITORIA</option>
@@ -208,7 +208,7 @@ export function CasesPage() {
           </label>
         </div>
         {!error && filteredCases.length === 0 && !isLoading ? (
-          <EmptyState detail="No assigned cases found right now." />
+          <EmptyState detail="No hay casos asignados por ahora." />
         ) : null}
         {!error && filteredCases.length > 0 ? (
           <div className="cases-table">
@@ -227,10 +227,10 @@ export function CasesPage() {
       {selectedCase ? (
         <div className="page-actions">
           <Link className="primary-action" to={`/dashboard/cases/${getCaseKey(selectedCase)}/upload`}>
-            Upload documents
+            Subir documentos
           </Link>
           <Link className="secondary-action" to={`/dashboard/cases/${getCaseKey(selectedCase)}`}>
-            View full case
+            Ver caso completo
           </Link>
           <ManualAuditButton caseId={getCaseKey(selectedCase)} />
         </div>
@@ -255,7 +255,7 @@ export function UploadsPage() {
       })
       .catch((requestError) => {
         if (isMounted) {
-          setError(requestError.message || "Could not load data. Check backend connectivity.");
+          setError(requestError.message || "No se pudieron cargar los datos. Revisa la conexion con el backend.");
         }
       })
       .finally(() => {
@@ -271,13 +271,13 @@ export function UploadsPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Documents" title="Document control for agent pipeline" />
+      <PageHeader eyebrow="Documentos" title="Control documental para el flujo agentico" />
       {isLoading ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
       {!isLoading && !error ? <UploadedFilesTable uploads={documents} /> : null}
       <div className="page-actions">
         <Link className="primary-action" to="/dashboard/cases">
-          Go to cases
+          Ir a casos
         </Link>
       </div>
     </>
@@ -301,7 +301,7 @@ export function CaseDetailPage() {
       })
       .catch(() => {
         if (isMounted) {
-          setError("Could not load data. Check backend connectivity.");
+          setError("No se pudieron cargar los datos. Revisa la conexion con el backend.");
         }
       })
       .finally(() => {
@@ -324,19 +324,19 @@ export function CaseDetailPage() {
   }
 
   if (!auditCase) {
-    return <EmptyState detail="No registered information found for this case." />;
+    return <EmptyState detail="No hay informacion registrada para este caso." />;
   }
 
   return (
     <>
-      <PageHeader eyebrow="Case detail" title={auditCase.claimNumber || unavailable} />
+      <PageHeader eyebrow="Detalle del caso" title={auditCase.claimNumber || unavailable} />
       <CaseDetail selectedCase={auditCase} />
       <div className="page-actions">
         <Link className="primary-action" to={`/dashboard/cases/${getCaseKey(auditCase)}/upload`}>
-          Upload documents
+          Subir documentos
         </Link>
         <Link className="secondary-action" to="/dashboard/cases">
-          Back to cases
+          Volver a casos
         </Link>
         <ManualAuditButton caseId={getCaseKey(auditCase)} />
       </div>
@@ -361,7 +361,7 @@ export function UploadFilesPage() {
       })
       .catch(() => {
         if (isMounted) {
-          setError("Could not load data. Check backend connectivity.");
+          setError("No se pudieron cargar los datos. Revisa la conexion con el backend.");
         }
       })
       .finally(() => {
@@ -384,12 +384,12 @@ export function UploadFilesPage() {
   }
 
   if (!auditCase) {
-    return <EmptyState detail="No registered information found for this case." />;
+    return <EmptyState detail="No hay informacion registrada para este caso." />;
   }
 
   return (
     <>
-      <PageHeader eyebrow="Document intake" title={`Documents for ${auditCase.claimNumber || unavailable}`} />
+      <PageHeader eyebrow="Carga documental" title={`Documentos para ${auditCase.claimNumber || unavailable}`} />
       <CaseDetail selectedCase={auditCase} compact />
       <FileUploadSection defaultAuditNumber={getCaseKey(auditCase)} auditCase={auditCase} />
     </>
@@ -420,7 +420,7 @@ export function AuditResultPage() {
       })
       .catch(() => {
         if (isMounted) {
-          setError("Could not load data. Check backend connectivity.");
+          setError("No se pudieron cargar los datos. Revisa la conexion con el backend.");
         }
       })
       .finally(() => {
@@ -442,7 +442,7 @@ export function AuditResultPage() {
       const verdictResult = await generateFinalVerdict(caseId);
       setResult((currentResult) => ({ ...(currentResult ?? {}), ...(verdictResult ?? {}) }));
     } catch (requestError) {
-      setVerdictError(requestError.message || "Could not run the audit. Check backend logs.");
+      setVerdictError(requestError.message || "No se pudo ejecutar la auditoria. Revisa los logs del backend.");
     } finally {
       setIsGeneratingVerdict(false);
     }
@@ -450,7 +450,7 @@ export function AuditResultPage() {
 
   return (
     <>
-      <PageHeader eyebrow="Audit result" title={`Audit outcome ${caseId}`} />
+      <PageHeader eyebrow="Resultado de auditoria" title={`Resultado de auditoria ${caseId}`} />
       {isLoading ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
       {verdictError ? <ErrorState message={verdictError} /> : null}
@@ -458,14 +458,14 @@ export function AuditResultPage() {
         <>
           <div className="page-actions">
             <button className="primary-action" type="button" onClick={handleGenerateFinalVerdict} disabled={isGeneratingVerdict}>
-              {isGeneratingVerdict ? "Generating final verdict" : "Generate final verdict"}
+              {isGeneratingVerdict ? "Generando veredicto final" : "Generar veredicto final"}
             </button>
           </div>
           <AuditResultCard result={result} />
         </>
       ) : null}
       {!isLoading && !error && !result ? (
-        <EmptyState detail="This case has no registered audit yet." />
+        <EmptyState detail="Este caso aun no tiene auditoria registrada." />
       ) : null}
     </>
   );
@@ -478,7 +478,7 @@ function ManualAuditButton({ caseId }) {
 
   async function handleRunAudit() {
     if (!caseId) {
-      setError("Data unavailable");
+      setError("Dato no disponible");
       return;
     }
 
@@ -492,7 +492,7 @@ function ManualAuditButton({ caseId }) {
       });
       navigate(`/dashboard/cases/${caseId}/result`, { state: { result } });
     } catch (requestError) {
-      setError(requestError.message || "Could not run the audit. Check backend logs.");
+      setError(requestError.message || "No se pudo ejecutar la auditoria. Revisa los logs del backend.");
     } finally {
       setIsRunning(false);
     }
@@ -501,7 +501,7 @@ function ManualAuditButton({ caseId }) {
   return (
     <>
       <button className="primary-action" type="button" onClick={handleRunAudit} disabled={isRunning}>
-        {isRunning ? "Running agent audit" : "Run agent audit"}
+        {isRunning ? "Ejecutando auditoria agentica" : "Ejecutar auditoria agentica"}
       </button>
       {error ? <div className="form-message error">{error}</div> : null}
     </>
@@ -531,7 +531,7 @@ export function AuditHistoryPage() {
       })
       .catch(() => {
         if (isMounted) {
-          setError("Could not load data. Check backend connectivity.");
+          setError("No se pudieron cargar los datos. Revisa la conexion con el backend.");
         }
       })
       .finally(() => {
@@ -547,7 +547,7 @@ export function AuditHistoryPage() {
 
   return (
     <>
-      <PageHeader eyebrow="History" title="Recent agent audit runs" />
+      <PageHeader eyebrow="Historial" title="Ejecuciones recientes de auditoria agentica" />
       {isLoading ? <LoadingState /> : null}
       {error ? <ErrorState message={error} /> : null}
       {!isLoading && !error ? <AuditHistoryPreview history={history} /> : null}
@@ -558,7 +558,7 @@ export function AuditHistoryPage() {
 export function RulesPage() {
   return (
     <>
-      <PageHeader eyebrow="Rules" title="Business rules control center" />
+      <PageHeader eyebrow="Reglas" title="Centro de control de reglas de negocio" />
       <BusinessRulesDashboard />
     </>
   );
@@ -573,7 +573,7 @@ function PageHeader({ eyebrow, title }) {
       </div>
       <label className="search-box">
         <Search size={17} />
-        <input placeholder="Search by claim, workshop, or plate" />
+        <input placeholder="Buscar por reclamo, taller o placa" />
       </label>
     </header>
   );
@@ -581,20 +581,20 @@ function PageHeader({ eyebrow, title }) {
 
 function Metrics({ statistics }) {
   return (
-    <section className="metrics" aria-label="Audit summary">
-      <StatCard label="Audited cases" value={statistics?.totalCases} />
-      <StatCard label="Approved" value={statistics?.approvedCases} />
-      <StatCard label="With discrepancies" value={statistics?.observedCases} />
-      <StatCard label="Denied" value={statistics?.deniedCases} />
-      <StatCard label="Human review" value={statistics?.humanReviewCases} />
-      <StatCard label="Approval rate" value={isAvailable(statistics?.approvalRate) ? `${statistics.approvalRate}%` : null} />
+    <section className="metrics" aria-label="Resumen de auditoria">
+      <StatCard label="Casos auditados" value={statistics?.totalCases} />
+      <StatCard label="Aprobados" value={statistics?.approvedCases} />
+      <StatCard label="Con discrepancias" value={statistics?.observedCases} />
+      <StatCard label="Denegados" value={statistics?.deniedCases} />
+      <StatCard label="Revision humana" value={statistics?.humanReviewCases} />
+      <StatCard label="Tasa de aprobacion" value={isAvailable(statistics?.approvalRate) ? `${statistics.approvalRate}%` : null} />
     </section>
   );
 }
 
 function CaseDetail({ selectedCase, compact }) {
   return (
-    <article className={`case-detail ${compact ? "compact" : ""}`} aria-label="Selected case detail">
+    <article className={`case-detail ${compact ? "compact" : ""}`} aria-label="Detalle del caso seleccionado">
       <div className="detail-header">
         <div>
           <span className={`status-pill ${selectedCase.status}`}>{statusCopy[selectedCase.status] ?? unavailable}</span>
@@ -603,25 +603,25 @@ function CaseDetail({ selectedCase, compact }) {
         </div>
         <div className="confidence">
           <strong>{isAvailable(selectedCase.confidence) ? `${selectedCase.confidence}%` : unavailable}</strong>
-          <span>confidence</span>
+          <span>confianza</span>
         </div>
       </div>
 
       <div className="summary-band">
         <div>
-          <span>Workshop</span>
+          <span>Taller</span>
           <strong>{selectedCase.workshop || unavailable}</strong>
         </div>
         <div>
-          <span>Plate</span>
+          <span>Placa</span>
           <strong>{selectedCase.plate || unavailable}</strong>
         </div>
         <div>
-          <span>Invoice total</span>
+          <span>Total factura</span>
           <strong>{isAvailable(selectedCase.invoiceTotal) ? currency.format(selectedCase.invoiceTotal) : unavailable}</strong>
         </div>
         <div>
-          <span>Expected total</span>
+          <span>Total esperado</span>
           <strong>{isAvailable(selectedCase.tariffTotal) ? currency.format(selectedCase.tariffTotal) : unavailable}</strong>
         </div>
       </div>
@@ -629,9 +629,9 @@ function CaseDetail({ selectedCase, compact }) {
       <p className="damage">{selectedCase.reportedDamage || unavailable}</p>
 
       <div className="findings">
-        <h3>Agent findings</h3>
+        <h3>Hallazgos del agente</h3>
         {selectedCase.findings.length === 0 ? (
-          <EmptyState detail="No findings registered for this case." />
+          <EmptyState detail="No hay hallazgos registrados para este caso." />
         ) : (
           selectedCase.findings.map((finding) => (
             <div className="finding" key={finding.id ?? finding.title}>
@@ -684,24 +684,24 @@ function AuditResultCard({ result }) {
         </div>
         <div className="confidence">
           <strong>{isAvailable(result.confidence) ? `${Math.round(result.confidence * 100)}%` : unavailable}</strong>
-          <span>confidence</span>
+          <span>confianza</span>
         </div>
       </div>
 
       <div className="result-metrics">
-        <StatCard label="Risk" value={isAvailable(result.riskScore) ? result.riskScore : null} />
-        <StatCard label="Invoice" value={isAvailable(result.invoiceTotal) ? currency.format(result.invoiceTotal) : null} />
-        <StatCard label="Expected" value={isAvailable(result.expectedTotal) ? currency.format(result.expectedTotal) : null} />
-        <StatCard label="Difference" value={isAvailable(result.difference) ? currency.format(result.difference) : null} />
+        <StatCard label="Riesgo" value={isAvailable(result.riskScore) ? result.riskScore : null} />
+        <StatCard label="Factura" value={isAvailable(result.invoiceTotal) ? currency.format(result.invoiceTotal) : null} />
+        <StatCard label="Esperado" value={isAvailable(result.expectedTotal) ? currency.format(result.expectedTotal) : null} />
+        <StatCard label="Diferencia" value={isAvailable(result.difference) ? currency.format(result.difference) : null} />
       </div>
 
-      <ResultSection title="Final verdict">
+      <ResultSection title="Veredicto final">
         <div className="form-message info">{result.finalVerdict || unavailable}</div>
       </ResultSection>
 
-      <ResultSection title="Findings">
+      <ResultSection title="Hallazgos">
         {findings.length === 0 ? (
-          <EmptyState detail="No findings registered." />
+          <EmptyState detail="No hay hallazgos registrados." />
         ) : (
           findings.map((item, index) => (
             <div className="finding" key={`${item.type ?? item.title ?? "finding"}-${index}`}>
@@ -716,9 +716,9 @@ function AuditResultCard({ result }) {
       </ResultSection>
 
       <div className="findings">
-        <h3>Discrepancies</h3>
+        <h3>Discrepancias</h3>
         {discrepancies.length === 0 ? (
-          <EmptyState detail="No discrepancies registered." />
+          <EmptyState detail="No hay discrepancias registradas." />
         ) : (
           discrepancies.map((item, index) => (
             <div className="finding" key={`${item.type}-${index}`}>
@@ -726,8 +726,8 @@ function AuditResultCard({ result }) {
                 <strong>{item.type || unavailable}</strong>
                 <p>{item.message || unavailable}</p>
                 <p>
-                  Expected: {valueOrUnavailable(item.expected)} | Found: {valueOrUnavailable(item.found)}
-                  {item.documentType ? ` | Document: ${item.documentType}` : ""}
+                  Esperado: {valueOrUnavailable(item.expected)} | Encontrado: {valueOrUnavailable(item.found)}
+                  {item.documentType ? ` | Documento: ${item.documentType}` : ""}
                 </p>
               </div>
               <span>{item.difference ?? item.severity ?? unavailable}</span>
@@ -736,9 +736,9 @@ function AuditResultCard({ result }) {
         )}
       </div>
 
-      <ResultSection title="Top reasons">
+      <ResultSection title="Principales razones">
         {topReasons.length === 0 ? (
-          <EmptyState detail="No top reasons registered." />
+          <EmptyState detail="No hay razones principales registradas." />
         ) : (
           topReasons.map((item, index) => (
             <div className="finding" key={`${item.reason ?? item.type ?? "reason"}-${index}`}>
@@ -752,9 +752,9 @@ function AuditResultCard({ result }) {
         )}
       </ResultSection>
 
-      <ResultSection title="Analyzed documents">
+      <ResultSection title="Documentos analizados">
         {documents.length === 0 ? (
-          <EmptyState detail="No documents linked to this result." />
+          <EmptyState detail="No hay documentos vinculados a este resultado." />
         ) : (
           documents.map((document, index) => (
             <div className="finding" key={`${document.name ?? document.originalName ?? "document"}-${index}`}>
@@ -802,10 +802,10 @@ function AuditHistoryPreview({ history }) {
   return (
     <section className="route-panel">
       <div className="section-heading">
-        <h2>Latest audits</h2>
+        <h2>Ultimas auditorias</h2>
       </div>
       {history.length === 0 ? (
-        <EmptyState detail="No previous audits found." />
+        <EmptyState detail="No hay auditorias anteriores." />
       ) : (
         <div className="cases-table">
           {history.slice(0, 5).map((item) => (

@@ -38,11 +38,11 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
     <form className="rule-form" onSubmit={handleSubmit}>
       <div className="section-heading">
         <div>
-          <p className="eyebrow">{editingRule ? "Edit" : "New rule"}</p>
-          <h2>{editingRule ? editingRule.name : "Create business rule"}</h2>
+          <p className="eyebrow">{editingRule ? "Editar" : "Nueva regla"}</p>
+          <h2>{editingRule ? editingRule.name : "Crear regla de negocio"}</h2>
         </div>
         {editingRule ? (
-          <button className="icon-button" type="button" onClick={onCancel} aria-label="Cancel edit">
+          <button className="icon-button" type="button" onClick={onCancel} aria-label="Cancelar edicion">
             <X size={18} />
           </button>
         ) : null}
@@ -50,12 +50,12 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
 
       <div className="form-grid">
         <label>
-          Name
+          Nombre
           <input value={form.name} onChange={(event) => updateField("name", event.target.value)} required />
         </label>
 
         <label>
-          Rule type
+          Tipo de regla
           <select value={form.type} onChange={(event) => updateField("type", event.target.value)}>
             {ruleTypes.map((type) => (
               <option key={type} value={type}>
@@ -66,7 +66,7 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
         </label>
 
         <label>
-          Target field
+          Campo objetivo
           <input
             value={form.targetField}
             onChange={(event) => updateField("targetField", event.target.value)}
@@ -76,7 +76,7 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
         </label>
 
         <label>
-          Operator
+          Operador
           <select value={form.operator} onChange={(event) => updateField("operator", event.target.value)}>
             {ruleOperators.map((operator) => (
               <option key={operator} value={operator}>
@@ -87,17 +87,17 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
         </label>
 
         <label>
-          Reference value
+          Valor de referencia
           <input
             value={form.referenceValue}
             onChange={(event) => updateField("referenceValue", event.target.value)}
-            placeholder="20, tariff, invoice"
+            placeholder="20, tarifario, factura"
             required
           />
         </label>
 
         <label>
-          Severity
+          Severidad
           <select value={form.severity} onChange={(event) => updateField("severity", event.target.value)}>
             {ruleSeverities.map((severity) => (
               <option key={severity} value={severity}>
@@ -108,7 +108,7 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
         </label>
 
         <label>
-          Status
+          Estado
           <select value={form.status} onChange={(event) => updateField("status", event.target.value)}>
             {ruleStatuses.map((status) => (
               <option key={status} value={status}>
@@ -120,18 +120,18 @@ export function BusinessRuleForm({ editingRule, onSubmit, onCancel }) {
       </div>
 
       <label>
-        Description
+        Descripcion
         <textarea value={form.description} onChange={(event) => updateField("description", event.target.value)} required />
       </label>
 
       <label>
-        Alert message
+        Mensaje de alerta
         <textarea value={form.alertMessage} onChange={(event) => updateField("alertMessage", event.target.value)} required />
       </label>
 
       <button className="primary-action" type="submit">
         <Save size={17} />
-        {editingRule ? "Save changes" : "Create rule"}
+        {editingRule ? "Guardar cambios" : "Crear regla"}
       </button>
     </form>
   );

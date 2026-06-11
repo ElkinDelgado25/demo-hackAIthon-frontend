@@ -14,26 +14,26 @@ export const ruleSeverities = ["BAJA", "MEDIA", "ALTA", "CRITICA"];
 export const ruleStatuses = ["ACTIVA", "INACTIVA"];
 
 const businessRuleLabels = {
-  PRECIO_MAXIMO: "Maximum price",
-  ITEM_DUPLICADO: "Duplicate item",
-  ITEM_NO_RELACIONADO: "Unrelated item",
-  CANTIDAD_MAXIMA: "Maximum quantity",
-  DOCUMENTO_OBLIGATORIO: "Required document",
-  PORCENTAJE_VARIACION: "Variation percentage",
-  MAYOR_QUE: "Greater than",
-  MENOR_QUE: "Less than",
-  IGUAL_A: "Equals",
-  DIFERENTE_DE: "Different from",
-  CONTIENE: "Contains",
-  NO_CONTIENE: "Does not contain",
-  BAJA: "Low",
-  MEDIA: "Medium",
-  ALTA: "High",
-  CRITICA: "Critical",
-  ACTIVA: "Active",
-  INACTIVA: "Inactive"
+  PRECIO_MAXIMO: "Precio maximo",
+  ITEM_DUPLICADO: "Item duplicado",
+  ITEM_NO_RELACIONADO: "Item no relacionado",
+  CANTIDAD_MAXIMA: "Cantidad maxima",
+  DOCUMENTO_OBLIGATORIO: "Documento obligatorio",
+  PORCENTAJE_VARIACION: "Porcentaje de variacion",
+  MAYOR_QUE: "Mayor que",
+  MENOR_QUE: "Menor que",
+  IGUAL_A: "Igual a",
+  DIFERENTE_DE: "Diferente de",
+  CONTIENE: "Contiene",
+  NO_CONTIENE: "No contiene",
+  BAJA: "Baja",
+  MEDIA: "Media",
+  ALTA: "Alta",
+  CRITICA: "Critica",
+  ACTIVA: "Activa",
+  INACTIVA: "Inactiva"
 };
 
 export function formatBusinessRuleLabel(value) {
-  return businessRuleLabels[value] ?? value ?? "Data unavailable";
+  return businessRuleLabels[value] ?? value ?? "Dato no disponible";
 }

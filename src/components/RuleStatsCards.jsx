@@ -3,11 +3,11 @@ import { StatCard } from "./States";
 export function RuleStatsCards({ rules }) {
   if (rules.length === 0) {
     return (
-      <section className="metrics" aria-label="Rule summary">
-        <StatCard label="Total rules" value={null} />
-        <StatCard label="Active" value={null} />
-        <StatCard label="Inactive" value={null} />
-        <StatCard label="Critical" value={null} />
+      <section className="metrics" aria-label="Resumen de reglas">
+        <StatCard label="Total de reglas" value={null} />
+        <StatCard label="Activas" value={null} />
+        <StatCard label="Inactivas" value={null} />
+        <StatCard label="Criticas" value={null} />
       </section>
     );
   }
@@ -18,11 +18,11 @@ export function RuleStatsCards({ rules }) {
   const critical = rules.filter((rule) => rule.severity === "CRITICA").length;
 
   return (
-    <section className="metrics" aria-label="Rule summary">
-      <StatCard label="Total rules" value={total} />
-      <StatCard label="Active" value={active} />
-      <StatCard label="Inactive" value={inactive} />
-      <StatCard label="Critical" value={critical} />
+    <section className="metrics" aria-label="Resumen de reglas">
+      <StatCard label="Total de reglas" value={total} />
+      <StatCard label="Activas" value={active} />
+      <StatCard label="Inactivas" value={inactive} />
+      <StatCard label="Criticas" value={critical} />
     </section>
   );
 }

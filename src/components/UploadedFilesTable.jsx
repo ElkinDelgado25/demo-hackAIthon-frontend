@@ -10,7 +10,7 @@ const dateFormatter = new Intl.DateTimeFormat("es-EC", {
 export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocumentType, onDelete, onReplace }) {
   if (uploads.length === 0) {
     return (
-      <EmptyState message="No uploaded documents" detail="Data unavailable" />
+      <EmptyState message="No hay documentos subidos" detail="Dato no disponible" />
     );
   }
 
@@ -22,14 +22,14 @@ export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocu
       <table className="data-table">
         <thead>
           <tr>
-            <th>Document</th>
-            <th>File</th>
-            <th>Claim</th>
-            <th>Size</th>
-            <th>Type</th>
-            <th>Uploaded</th>
-            <th>Status</th>
-            {canManageFiles ? <th>Actions</th> : null}
+            <th>Documento</th>
+            <th>Archivo</th>
+            <th>Reclamo</th>
+            <th>Tamano</th>
+            <th>Tipo</th>
+            <th>Subido</th>
+            <th>Estado</th>
+            {canManageFiles ? <th>Acciones</th> : null}
           </tr>
         </thead>
         <tbody>
@@ -41,7 +41,7 @@ export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocu
                     className="inline-select"
                     value={upload.documentType}
                     onChange={(event) => onChangeDocumentType(upload.id, event.target.value)}
-                    aria-label={`Document type for ${upload.name}`}
+                    aria-label={`Tipo de documento para ${upload.name}`}
                   >
                     {documentOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -55,13 +55,13 @@ export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocu
               </td>
               <td>
                 <strong>{upload.name}</strong>
-                <span>Parsing: {upload.parseStatus || upload.extractionStatus || "Data unavailable"}</span>
-                {upload.parseError ? <span>Parse error: {upload.parseError}</span> : null}
+                <span>Analisis: {displayFileStatus(upload.parseStatus || upload.extractionStatus) || "Dato no disponible"}</span>
+                {upload.parseError ? <span>Error de analisis: {upload.parseError}</span> : null}
               </td>
-              <td>{upload.auditNumber || "Data unavailable"}</td>
+              <td>{upload.auditNumber || "Dato no disponible"}</td>
               <td>{formatFileSize(upload.size)}</td>
-              <td>{upload.type || "Data unavailable"}</td>
-              <td>{upload.uploadedAt ? dateFormatter.format(new Date(upload.uploadedAt)) : "Data unavailable"}</td>
+              <td>{upload.type || "Dato no disponible"}</td>
+              <td>{upload.uploadedAt ? dateFormatter.format(new Date(upload.uploadedAt)) : "Dato no disponible"}</td>
               <td>
                 <span className={`file-status ${upload.status}`}>{displayFileStatus(upload.status)}</span>
               </td>
@@ -69,13 +69,13 @@ export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocu
                 <td>
                   <div className="row-actions">
                     {onReplace ? (
-                      <label className="icon-button" title="Replace file">
+                      <label className="icon-button" title="Reemplazar archivo">
                         <RefreshCcw size={16} />
                         <input type="file" accept=".pdf,.csv,.xlsx,.json,.png,.jpg,.jpeg,.txt" onChange={(event) => onReplace(upload, event)} />
                       </label>
                     ) : null}
                     {onDelete ? (
-                      <button className="icon-button danger" type="button" onClick={() => onDelete(upload.id)} aria-label="Delete file">
+                      <button className="icon-button danger" type="button" onClick={() => onDelete(upload.id)} aria-label="Eliminar archivo">
                         <Trash2 size={16} />
                       </button>
                     ) : null}
@@ -92,30 +92,30 @@ export function UploadedFilesTable({ uploads, documentOptions = [], onChangeDocu
 
 function documentLabel(documentType) {
   const labels = {
-    FACTURA: "Invoice",
-    ORDEN_REPARACION: "Repair order",
-    DETALLE_MANO_OBRA: "Labor detail",
-    FOTOS_DANIO: "Damage photos",
-    TARIFARIO: "Tariff sheet",
-    POLIZA: "Policy",
-    SUSTENTO_ADICIONAL: "Supporting document"
+    FACTURA: "Factura",
+    ORDEN_REPARACION: "Orden de reparacion",
+    DETALLE_MANO_OBRA: "Detalle de mano de obra",
+    FOTOS_DANIO: "Fotos del danio",
+    TARIFARIO: "Tarifario",
+    POLIZA: "Poliza",
+    SUSTENTO_ADICIONAL: "Documento de sustento"
   };
 
-  return labels[documentType] ?? documentType ?? "Data unavailable";
+  return labels[documentType] ?? documentType ?? "Dato no disponible";
 }
 
 function displayFileStatus(status) {
   const labels = {
-    cargado: "Uploaded",
-    pendiente: "Pending",
-    procesado: "Processed",
+    cargado: "Subido",
+    pendiente: "Pendiente",
+    procesado: "Procesado",
     error: "Error",
-    activa: "Active",
-    inactiva: "Inactive",
-    uploaded: "Uploaded",
-    pending: "Pending",
-    processed: "Processed"
+    activa: "Activa",
+    inactiva: "Inactiva",
+    uploaded: "Subido",
+    pending: "Pendiente",
+    processed: "Procesado"
   };
 
-  return labels[status] ?? status ?? "Data unavailable";
+  return labels[status] ?? status ?? "Dato no disponible";
 }

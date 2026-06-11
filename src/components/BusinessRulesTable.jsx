@@ -4,7 +4,7 @@ import { EmptyState } from "./States";
 
 export function BusinessRulesTable({ rules, onEdit, onToggle, onDelete }) {
   if (rules.length === 0) {
-    return <EmptyState detail="No configured rules found." />;
+    return <EmptyState detail="No hay reglas configuradas." />;
   }
 
   return (
@@ -12,27 +12,27 @@ export function BusinessRulesTable({ rules, onEdit, onToggle, onDelete }) {
       <table className="data-table">
         <thead>
           <tr>
-            <th>Rule</th>
-            <th>Type</th>
-            <th>Field</th>
-            <th>Operator</th>
-            <th>Reference</th>
-            <th>Severity</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>Regla</th>
+            <th>Tipo</th>
+            <th>Campo</th>
+            <th>Operador</th>
+            <th>Referencia</th>
+            <th>Severidad</th>
+            <th>Estado</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
           {rules.map((rule) => (
             <tr key={rule.id}>
               <td>
-                <strong>{rule.name || "Data unavailable"}</strong>
-                <span>{rule.alertMessage || "Data unavailable"}</span>
+                <strong>{rule.name || "Dato no disponible"}</strong>
+                <span>{rule.alertMessage || "Dato no disponible"}</span>
               </td>
               <td>{formatBusinessRuleLabel(rule.type)}</td>
-              <td>{rule.targetField || "Data unavailable"}</td>
+              <td>{rule.targetField || "Dato no disponible"}</td>
               <td>{formatBusinessRuleLabel(rule.operator)}</td>
-              <td>{rule.referenceValue || "Data unavailable"}</td>
+              <td>{rule.referenceValue || "Dato no disponible"}</td>
               <td>
                 <span className={`severity-pill ${rule.severity?.toLowerCase() ?? ""}`}>{formatBusinessRuleLabel(rule.severity)}</span>
               </td>
@@ -41,13 +41,13 @@ export function BusinessRulesTable({ rules, onEdit, onToggle, onDelete }) {
               </td>
               <td>
                 <div className="row-actions">
-                  <button className="icon-button" type="button" onClick={() => onEdit(rule)} aria-label="Edit rule">
+                  <button className="icon-button" type="button" onClick={() => onEdit(rule)} aria-label="Editar regla">
                     <Edit3 size={16} />
                   </button>
-                  <button className="icon-button" type="button" onClick={() => onToggle(rule.id)} aria-label="Enable or disable rule">
+                  <button className="icon-button" type="button" onClick={() => onToggle(rule.id)} aria-label="Activar o desactivar regla">
                     <Power size={16} />
                   </button>
-                  <button className="icon-button danger" type="button" onClick={() => onDelete(rule.id)} aria-label="Delete rule">
+                  <button className="icon-button danger" type="button" onClick={() => onDelete(rule.id)} aria-label="Eliminar regla">
                     <Trash2 size={16} />
                   </button>
                 </div>

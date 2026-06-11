@@ -7,25 +7,25 @@ export function BusinessRuleFilters({ filters, onChange }) {
   }
 
   return (
-    <section className="filters-panel" aria-label="Rule filters">
+    <section className="filters-panel" aria-label="Filtros de reglas">
       <label className="search-box compact">
         <Search size={17} />
         <input
           value={filters.search}
-          placeholder="Search rule by name"
+          placeholder="Buscar regla por nombre"
           onChange={(event) => updateFilter("search", event.target.value)}
         />
       </label>
 
-      <SelectFilter label="Type" value={filters.type} options={ruleTypes} onChange={(value) => updateFilter("type", value)} />
+      <SelectFilter label="Tipo" value={filters.type} options={ruleTypes} onChange={(value) => updateFilter("type", value)} />
       <SelectFilter
-        label="Severity"
+        label="Severidad"
         value={filters.severity}
         options={ruleSeverities}
         onChange={(value) => updateFilter("severity", value)}
       />
       <SelectFilter
-        label="Status"
+        label="Estado"
         value={filters.status}
         options={ruleStatuses}
         onChange={(value) => updateFilter("status", value)}
@@ -39,7 +39,7 @@ function SelectFilter({ label, value, options, onChange }) {
     <label>
       {label}
       <select value={value} onChange={(event) => onChange(event.target.value)}>
-        <option value="">All</option>
+        <option value="">Todos</option>
         {options.map((option) => (
           <option key={option} value={option}>
             {formatBusinessRuleLabel(option)}
